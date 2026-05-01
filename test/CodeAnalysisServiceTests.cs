@@ -1,7 +1,4 @@
-using GithubAnalyzer.Analysis.Analyzer;
-using GithubAnalyzer.Analysis.Application;
-using GithubAnalyzer.Analysis.Parsers;
-using GithubAnalyzer.Analysis.Serialization;
+using GithubAnalyzer.Analysis.Service;
 
 namespace GithubAnalyzer.Analysis.Tests;
 

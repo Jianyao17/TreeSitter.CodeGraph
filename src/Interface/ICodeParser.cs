@@ -1,4 +1,4 @@
-namespace GithubAnalyzer.Analysis.Parsers;
+namespace GithubAnalyzer.Analysis.Interface;
 
 public interface ICodeParser
 {

@@ -1,7 +1,8 @@
 using TreeSitter;
-using GithubAnalyzer.Analysis.Domain;
+using GithubAnalyzer.Analysis.Graph;
+using GithubAnalyzer.Analysis.Interface;
 
-namespace GithubAnalyzer.Analysis.Analyzer;
+namespace GithubAnalyzer.Analysis.Service;
 
 public class TreeSitterAnalyzer : ICodeAnalyzer
 {
@@ -9,21 +10,27 @@ public class TreeSitterAnalyzer : ICodeAnalyzer
     {
         var graph = new CodeGraph();
         var fileId = Guid.NewGuid().ToString();
-        graph.Nodes.Add(new GraphNode(fileId, filePath, "File"));
+        graph.Nodes.Add(new GraphNode
+        {
+            Id = fileId,
+            Label = Path.GetFileName(filePath),
+            Path = filePath,
+            Type = NodeType.File
+        });
 
         if (parsedCode is Tree tree)
         {
-            Traverse(tree.RootNode, fileId, graph);
+            Traverse(tree.RootNode, fileId, filePath, graph);
         }
         else if (parsedCode is Node rootNode)
         {
-            Traverse(rootNode, fileId, graph);
+            Traverse(rootNode, fileId, filePath, graph);
         }
 
         return graph;
     }
 
-    private void Traverse(Node node, string parentId, CodeGraph graph)
+    private void Traverse(Node node, string parentId, string filePath, CodeGraph graph)
     {
         // Simple heuristic: Look for method declarations
         // In Tree-sitter C# grammar, these are often "method_declaration"
@@ -31,18 +38,30 @@ public class TreeSitterAnalyzer : ICodeAnalyzer
         {
             var methodName = FindChildByType(node, "identifier")?.Text ?? "UnknownMethod";
             var methodId = Guid.NewGuid().ToString();
-            
-            graph.Nodes.Add(new GraphNode(methodId, methodName, "Method"));
-            graph.Edges.Add(new GraphEdge(parentId, methodId, "CONTAINS"));
-            
+
+            graph.Nodes.Add(new GraphNode
+            {
+                Id = methodId,
+                Label = methodName,
+                Path = filePath,
+                Type = NodeType.Function
+            });
+            graph.Edges.Add(new GraphEdge
+            {
+                Source = parentId,
+                Target = methodId,
+                Category = EdgeCategory.SourceRelation,
+                Type = EdgeType.Define
+            });
+
             // We could go deeper, but let's keep it simple
-            return; 
+            return;
         }
 
         // Continue traversal using Children enumerable
         foreach (var child in node.Children)
         {
-            Traverse(child, parentId, graph);
+            Traverse(child, parentId, filePath, graph);
         }
     }
 

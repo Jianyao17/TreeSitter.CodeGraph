@@ -1,8 +1,6 @@
-using GithubAnalyzer.Analysis.Analyzer;
-using GithubAnalyzer.Analysis.Parsers;
-using GithubAnalyzer.Analysis.Serialization;
+using GithubAnalyzer.Analysis.Interface;
 
-namespace GithubAnalyzer.Analysis.Application;
+namespace GithubAnalyzer.Analysis.Service;
 
 /// <summary>
 /// Service to orchestrate the code analysis process.

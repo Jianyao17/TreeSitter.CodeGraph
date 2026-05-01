@@ -1,7 +1,7 @@
 using System.Text.Json;
-using GithubAnalyzer.Analysis.Domain;
+using GithubAnalyzer.Analysis.Graph;
 
-namespace GithubAnalyzer.Analysis.Serialization;
+namespace GithubAnalyzer.Analysis.Service;
 
 public class JsonSerializerService
 {

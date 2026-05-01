@@ -1,6 +1,7 @@
 using TreeSitter;
+using GithubAnalyzer.Analysis.Interface;
 
-namespace GithubAnalyzer.Analysis.Parsers;
+namespace GithubAnalyzer.Analysis.Service;
 
 public class TreeSitterParser : ICodeParser, IDisposable
 {
@@ -18,7 +19,7 @@ public class TreeSitterParser : ICodeParser, IDisposable
 
     public object Parse(string code)
     {
-        // Parse the code and return the tree. 
+        // Parse the code and return the tree.
         // Note: The Tree object must be kept alive while its Nodes are being accessed.
         var tree = _parser.Parse(code);
         return tree ?? throw new Exception("Failed to parse code.");

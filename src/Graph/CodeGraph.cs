@@ -1,4 +1,4 @@
-namespace GithubAnalyzer.Analysis.Domain;
+namespace GithubAnalyzer.Analysis.Graph;
 
 public sealed class CodeGraph
 {

@@ -1,6 +1,6 @@
-using GithubAnalyzer.Analysis.Domain;
+using GithubAnalyzer.Analysis.Graph;
 
-namespace GithubAnalyzer.Analysis.Analyzer;
+namespace GithubAnalyzer.Analysis.Interface;
 
 public interface ICodeAnalyzer
 {
