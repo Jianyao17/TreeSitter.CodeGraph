@@ -1,4 +1,4 @@
-namespace GithubAnalyzer.Analysis.Graph;
+namespace GithubAnalyzer.Analysis.Domain.Graph;
 
 /// <summary>
 /// Representasi edge (relasi) antar node dalam graf kode.
@@ -6,42 +6,19 @@ namespace GithubAnalyzer.Analysis.Graph;
 public record GraphEdge
 {
     /// <summary>
-    /// ID node sumber
+    /// GUID node sumber
     /// </summary>
-    public string Source { get; init; } = default!;
+    public Guid From { get; init; } = default!;
 
     /// <summary>
-    /// ID node tujuan
+    /// GUID node tujuan
     /// </summary>
-    public string Target { get; init; } = default!;
-
-    /// <summary>
-    /// Kategori relasi:
-    /// - SOURCE_RELATION: relasi struktur / definisi
-    /// - USE_RELATION: relasi penggunaan / dependensi
-    /// </summary>
-    public EdgeCategory Category { get; init; }
+    public Guid To { get; init; } = default!;
 
     /// <summary>
     /// Jenis relasi spesifik (lihat EdgeType)
     /// </summary>
     public EdgeType Type { get; init; }
-}
-
-/// <summary>
-/// Kategori besar relasi dalam graf.
-/// </summary>
-public enum EdgeCategory
-{
-    /// <summary>
-    /// Relasi struktur / asal definisi kode
-    /// </summary>
-    SourceRelation,
-
-    /// <summary>
-    /// Relasi penggunaan / dependensi kode
-    /// </summary>
-    UseRelation
 }
 
 /// <summary>

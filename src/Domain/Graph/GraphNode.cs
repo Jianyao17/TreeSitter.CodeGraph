@@ -1,4 +1,4 @@
-namespace GithubAnalyzer.Analysis.Graph;
+namespace GithubAnalyzer.Analysis.Domain.Graph;
 
 /// <summary>
 /// Representasi node dalam graf kode.
@@ -7,9 +7,9 @@ namespace GithubAnalyzer.Analysis.Graph;
 public record GraphNode
 {
     /// <summary>
-    /// ID unik node (disarankan: kombinasi path + nama)
+    /// GUID unik node
     /// </summary>
-    public string Id { get; init; } = default!;
+    public Guid Id { get; init; } = default!;
 
     /// <summary>
     /// Nama yang ditampilkan (misal: main.php, getUser, UserService)
@@ -18,6 +18,11 @@ public record GraphNode
 
     /// <summary>
     /// Path absolut / relatif dari node dalam project
+    /// Contoh: 
+    ///     src/Controllers/UserController.cs::Class1, 
+    ///     src/Services/UserService.cs::Function1(), 
+    ///     src/Models/User.cs::Class1.Function1(Param1, Param2)
+    ///     Root/Namespace1/Namespace2::Class1.Function1(Param1, Param2)
     /// </summary>
     public string Path { get; init; } = default!;
 
@@ -32,7 +37,7 @@ public record GraphNode
 /// </summary>
 public enum NodeType
 {
-    Folder,
+    FolderOrNamespace,
     File,
     Class,
     Function
