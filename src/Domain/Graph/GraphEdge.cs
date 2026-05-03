@@ -6,14 +6,14 @@ namespace GithubAnalyzer.Analysis.Domain.Graph;
 public record GraphEdge
 {
     /// <summary>
-    /// GUID node sumber
+    /// PathId node sumber
     /// </summary>
-    public Guid From { get; init; } = default!;
+    public string From { get; init; } = default!;
 
     /// <summary>
-    /// GUID node tujuan
+    /// PathId node tujuan
     /// </summary>
-    public Guid To { get; init; } = default!;
+    public string To { get; init; } = default!;
 
     /// <summary>
     /// Jenis relasi spesifik (lihat EdgeType)
@@ -29,7 +29,7 @@ public enum EdgeType
 {
     /// <summary>
     /// Menunjukkan hubungan kepemilikan atau hirarki.
-    /// Contoh: Folder → File, Folder → Folder.
+    /// Contoh: Folder → File, FolderParrent → FolderChild.
     /// </summary>
     BelongsTo,
 
@@ -47,6 +47,7 @@ public enum EdgeType
 
     /// <summary>
     /// Menunjukkan hubungan inklusi atau import.
+    /// Khusus untuk bahasa yang mendukung mekanisme include/require (misal: PHP, C/C++).
     /// Example: File → File (include/require).
     /// </summary>
     Include,

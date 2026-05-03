@@ -6,8 +6,10 @@ public sealed class CodeGraph
     public List<GraphNode> Nodes { get; init; } = new();
 
     // Daftar edge kategori SourceRelation (struktur / definisi)
+    // EdgeType bisa berupa: BelongsTo, Define, Include
     public List<GraphEdge> SourceRelEdges { get; init; } = new();
     
     // Daftar edge kategori UseRelation (penggunaan / dependensi)
+    // EdgeType bisa berupa: Call
     public List<GraphEdge> UseRelEdges { get; init; } = new();
 }
