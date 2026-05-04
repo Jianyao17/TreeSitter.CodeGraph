@@ -1,4 +1,4 @@
-using GithubAnalyzer.Analysis.Graph;
+using GithubAnalyzer.Analysis.Domain.Graph;
 
 namespace GithubAnalyzer.Analysis.Interface;
 

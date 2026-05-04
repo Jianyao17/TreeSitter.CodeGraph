@@ -1,5 +1,5 @@
 using System.Text.Json;
-using GithubAnalyzer.Analysis.Graph;
+using GithubAnalyzer.Analysis.Domain.Graph;
 
 namespace GithubAnalyzer.Analysis.Service;
 

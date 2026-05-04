@@ -1,5 +1,5 @@
 using TreeSitter;
-using GithubAnalyzer.Analysis.Graph;
+using GithubAnalyzer.Analysis.Domain.Graph;
 using GithubAnalyzer.Analysis.Interface;
 
 namespace GithubAnalyzer.Analysis.Service;
@@ -12,9 +12,8 @@ public class TreeSitterAnalyzer : ICodeAnalyzer
         var fileId = Guid.NewGuid().ToString();
         graph.Nodes.Add(new GraphNode
         {
-            Id = fileId,
+            PathId = fileId,
             Label = Path.GetFileName(filePath),
-            Path = filePath,
             Type = NodeType.File
         });
 
@@ -41,16 +40,14 @@ public class TreeSitterAnalyzer : ICodeAnalyzer
 
             graph.Nodes.Add(new GraphNode
             {
-                Id = methodId,
+                PathId = methodId,
                 Label = methodName,
-                Path = filePath,
                 Type = NodeType.Function
             });
-            graph.Edges.Add(new GraphEdge
+            graph.SourceRelEdges.Add(new GraphEdge
             {
-                Source = parentId,
-                Target = methodId,
-                Category = EdgeCategory.SourceRelation,
+                From = parentId,
+                To = methodId,
                 Type = EdgeType.Define
             });
 
