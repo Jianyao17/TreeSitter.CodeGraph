@@ -21,9 +21,10 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
 {
 
     public async IAsyncEnumerable<TreeSitterProgress<CodeGraph>> AnalyzeAsync(
-        CodebaseSnapshot snapshot,
+        CodebaseSnapshot snapshot, 
         AnalysisLanguage language,
-        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        [EnumeratorCancellation] 
+        CancellationToken cancelToken = default)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
 
@@ -68,7 +69,7 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
 
         for (int i = 0; i < totalFiles; i++)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            cancelToken.ThrowIfCancellationRequested();
 
             var file = snapshot.Files[i];
             var relativePath = PathId.Normalize(file.RelativePath);
@@ -228,7 +229,7 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
         int fileIdx = 0;
         foreach (var (relativePath, result) in fileResults)
         {
-            cancellationToken.ThrowIfCancellationRequested();
+            cancelToken.ThrowIfCancellationRequested();
 
             // --- Function call edges ---
             foreach (var call in result.Calls)
@@ -292,14 +293,15 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
     /// <summary>
     /// Instantiate lang query provider sesuai bahasa (tanpa factory pattern).
     /// </summary>
-    private static BaseLangQuery CreateLangQuery(AnalysisLanguage language) => language switch
-    {
-        AnalysisLanguage.CSharp => new CSharpLangQuery(),
-        AnalysisLanguage.JavaScript => new JavaScriptLangQuery(),
-        AnalysisLanguage.Php => new PhpLangQuery(),
-        AnalysisLanguage.Cpp => new CppLangQuery(),
-        _ => throw new ArgumentOutOfRangeException(nameof(language))
-    };
+    private static BaseLangQuery CreateLangQuery(AnalysisLanguage language) 
+        => language switch
+        {
+            AnalysisLanguage.CSharp => new CSharpLangQuery(),
+            AnalysisLanguage.JavaScript => new JavaScriptLangQuery(),
+            AnalysisLanguage.Php => new PhpLangQuery(),
+            AnalysisLanguage.Cpp => new CppLangQuery(),
+            _ => throw new ArgumentOutOfRangeException(nameof(language))
+        };
 
     /// <summary>
     /// Bangun folder/namespace hierarchy nodes dan edges.
