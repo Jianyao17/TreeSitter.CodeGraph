@@ -7,6 +7,11 @@ namespace GithubAnalyzer.Analysis.TreeSitter.Utils;
 public static class PathId
 {
     /// <summary>
+    /// Separator utama antara path dan symbol.
+    /// </summary>
+    public const string Separator = "::";
+
+    /// <summary>
     /// Bangun PathId lengkap untuk class atau function.
     /// Contoh: "src/Controllers/UserController.cs::Namespace.UserController.GetUser(int)"
     /// </summary>
@@ -15,18 +20,18 @@ public static class PathId
         var path = Normalize(relativePath);
 
         if (string.IsNullOrEmpty(symbolPath))
-            return $"{path}::{symbol}";
+            return $"{path}{Separator}{symbol}";
 
-        return $"{path}::{symbolPath}.{symbol}";
+        return $"{path}{Separator}{symbolPath}.{symbol}";
     }
 
     /// <summary>
-    /// PathId untuk folder (tanpa symbol).
+    /// PathId untuk directory (tanpa symbol).
     /// Contoh: "src/Controllers::"
     /// </summary>
-    public static string ForFolder(string relativePath)
+    public static string ForDirectory(string relativePath)
     {
-        return $"{Normalize(relativePath)}::";
+        return $"{Normalize(relativePath)}{Separator}";
     }
 
     /// <summary>
@@ -35,16 +40,16 @@ public static class PathId
     /// </summary>
     public static string ForNamespace(string namespaceName)
     {
-        return $"::{namespaceName}";
+        return $"{Separator}{namespaceName}";
     }
 
     /// <summary>
     /// PathId untuk file node.
-    /// Contoh: "src/Controllers/UserController.cs"
+    /// Contoh: "src/Controllers/UserController.cs::"
     /// </summary>
     public static string ForFile(string relativePath)
     {
-        return Normalize(relativePath);
+        return $"{Normalize(relativePath)}{Separator}";
     }
 
     /// <summary>

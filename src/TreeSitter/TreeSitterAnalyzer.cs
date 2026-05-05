@@ -19,17 +19,26 @@ namespace GithubAnalyzer.Analysis.TreeSitter;
 /// </summary>
 public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
 {
+    // === Class-level analysis state ===
+    private CodeGraph _graph = new();                                            // Output graf akhir
+    private readonly List<SymbolDeclaration> _declaredFunctions = [];            // Deklarasi fungsi dari Pass 1, untuk lookup di Pass 2
+    private readonly List<SymbolDeclaration> _declaredClasses = [];              // Deklarasi class dari Pass 1, untuk lookup di Pass 2
+    private readonly Dictionary<string, LangQueryResult> _fileResults = new();   // Cache hasil query per file, reuse di Pass 2
+    private readonly HashSet<string> _createdDirNodes = new();                   // Tracking directory nodes yang sudah dibuat (anti-duplikat)
+    private readonly HashSet<string> _createdNsNodes = new();                    // Tracking namespace nodes yang sudah dibuat (anti-duplikat)
 
     public async IAsyncEnumerable<TreeSitterProgress<CodeGraph>> AnalyzeAsync(
-        CodebaseSnapshot snapshot, 
+        CodebaseSnapshot snapshot,
         AnalysisLanguage language,
-        [EnumeratorCancellation] 
+        [EnumeratorCancellation]
         CancellationToken cancelToken = default)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
 
+        // Reset state untuk analisis baru
+        ResetState();
+
         using var langQuery = CreateLangQuery(language);
-        var graph = new CodeGraph();
         var totalFiles = snapshot.Files.Count;
 
         if (totalFiles == 0)
@@ -39,23 +48,10 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
                 Percentage = 100,
                 Message = "Tidak ada file untuk dianalisis.",
                 IsCompleted = true,
-                Result = graph
+                Result = _graph
             };
             yield break;
         }
-
-        // === Data structure untuk menampung hasil Pass 1 ===
-
-        // Semua declarations yang ditemukan, indexed by name untuk lookup di Pass 2
-        var declaredFunctions = new List<DeclaredSymbol>();
-        var declaredClasses = new List<DeclaredSymbol>();
-
-        // Mapping file → extracted data untuk reuse di Pass 2
-        var fileResults = new Dictionary<string, LangQueryResult>();
-
-        // Set untuk tracking folder/namespace nodes yang sudah dibuat
-        var createdFolderNodes = new HashSet<string>();
-        var createdNamespaceNodes = new HashSet<string>();
 
         // ================================================================
         // PASS 1: Declaration Mapping (0% - 60%)
@@ -74,7 +70,6 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
             var file = snapshot.Files[i];
             var relativePath = PathId.Normalize(file.RelativePath);
 
-            // Extract semua deklarasi dan usage dari file ini
             LangQueryResult result;
             try
             {
@@ -82,118 +77,15 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
             }
             catch (Exception)
             {
-                // Skip file yang gagal di-parse (binary, corrupt, etc.)
+                // Skip file yang gagal di-parse (binary, corrupt, dll.)
                 continue;
             }
 
-            fileResults[relativePath] = result;
+            // Cache hasil query per file untuk Pass 2 (usage scanning)
+            _fileResults[relativePath] = result;
 
-            // --- Bangun folder/namespace hierarchy ---
-            BuildFolderHierarchy(relativePath, langQuery.UsesNamespace, result, graph,
-                                 createdFolderNodes, createdNamespaceNodes);
-
-            // --- File node ---
-            var filePathId = PathId.ForFile(relativePath);
-            graph.Nodes.Add(new GraphNode
-            {
-                PathId = filePathId,
-                Label = Path.GetFileName(relativePath),
-                Type = NodeType.File
-            });
-
-            // Edge: parent folder/namespace → file (BelongsTo)
-            var parentFolderPath = GetParentFolder(relativePath);
-            if (!string.IsNullOrEmpty(parentFolderPath))
-            {
-                var parentId = langQuery.UsesNamespace && result.Namespaces.Count > 0
-                    ? PathId.ForNamespace(result.Namespaces[0].Name)
-                    : PathId.ForFolder(parentFolderPath);
-
-                graph.SourceRelEdges.Add(new GraphEdge
-                {
-                    From = parentId,
-                    To = filePathId,
-                    Type = EdgeType.BelongsTo
-                });
-            }
-
-            // --- Class nodes ---
-            foreach (var cls in result.Classes)
-            {
-                var symbolPath = cls.ParentNamespace;
-                var classPathId = PathId.Build(relativePath, symbolPath, cls.Name);
-
-                graph.Nodes.Add(new GraphNode
-                {
-                    PathId = classPathId,
-                    Label = cls.Name,
-                    Type = NodeType.Class
-                });
-
-                // Edge: File → Class (Define)
-                graph.SourceRelEdges.Add(new GraphEdge
-                {
-                    From = filePathId,
-                    To = classPathId,
-                    Type = EdgeType.Define
-                });
-
-                declaredClasses.Add(new DeclaredSymbol(cls.Name, classPathId, relativePath, cls.ParentNamespace));
-            }
-
-            // --- Function nodes ---
-            foreach (var func in result.Functions)
-            {
-                var funcLabel = PathId.FormatFunction(func.Name, func.Params);
-                var symbolPath = BuildSymbolPath(func.ParentNamespace, func.ParentClass);
-                var funcPathId = PathId.Build(relativePath, symbolPath, funcLabel);
-
-                graph.Nodes.Add(new GraphNode
-                {
-                    PathId = funcPathId,
-                    Label = funcLabel,
-                    Type = NodeType.Function
-                });
-
-                // Edge: parent → function (Define)
-                // Jika ada parent class, edge dari class; jika tidak, dari file
-                string parentId;
-                if (!string.IsNullOrEmpty(func.ParentClass))
-                {
-                    var classSymbolPath = func.ParentNamespace;
-                    parentId = PathId.Build(relativePath, classSymbolPath, func.ParentClass);
-                }
-                else
-                {
-                    parentId = filePathId;
-                }
-
-                graph.SourceRelEdges.Add(new GraphEdge
-                {
-                    From = parentId,
-                    To = funcPathId,
-                    Type = EdgeType.Define
-                });
-
-                declaredFunctions.Add(new DeclaredSymbol(
-                    func.Name, funcPathId, relativePath, func.ParentNamespace, func.ParentClass));
-            }
-
-            // --- Include edges ---
-            foreach (var inc in result.Includes)
-            {
-                // Coba resolve include path ke file yang ada di snapshot
-                var targetFile = ResolveIncludePath(inc.Path, relativePath, snapshot);
-                if (targetFile is not null)
-                {
-                    graph.SourceRelEdges.Add(new GraphEdge
-                    {
-                        From = filePathId,
-                        To = PathId.ForFile(PathId.Normalize(targetFile)),
-                        Type = EdgeType.Include
-                    });
-                }
-            }
+            // Proses deklarasi: bangun hierarchy nodes, file node, dan SourceRelEdges
+            ProcessDeclarations(relativePath, result, langQuery.UsesNamespace, snapshot);
 
             // Progress Pass 1: 0-60%
             var pass1Progress = (int)((i + 1.0) / totalFiles * 60);
@@ -203,7 +95,6 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
                 Message = $"Pass 1: {i + 1}/{totalFiles} file diproses — {Path.GetFileName(relativePath)}"
             };
 
-            // Yield control agar tidak memblokir thread caller
             await Task.Yield();
         }
 
@@ -217,60 +108,29 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
             Message = "Memulai Pass 2: Usage Scanning..."
         };
 
-        // Index deklarasi by name untuk lookup cepat
-        var funcLookup = declaredFunctions
+        // Index deklarasi berdasarkan nama untuk lookup cepat
+        var funcLookup = _declaredFunctions
             .GroupBy(d => d.Name)
             .ToDictionary(g => g.Key, g => g.ToList());
 
-        var classLookup = declaredClasses
+        var classLookup = _declaredClasses
             .GroupBy(d => d.Name)
             .ToDictionary(g => g.Key, g => g.ToList());
 
         int fileIdx = 0;
-        foreach (var (relativePath, result) in fileResults)
+        foreach (var (relativePath, result) in _fileResults)
         {
             cancelToken.ThrowIfCancellationRequested();
 
-            // --- Function call edges ---
-            foreach (var call in result.Calls)
-            {
-                var resolved = ResolveSymbol(call.Name, relativePath, result, funcLookup);
-                if (resolved is null) continue;
+            // Proses usage: bangun UseRelEdges berdasarkan calls dan typeRefs
+            ProcessUsages(relativePath, result, funcLookup, classLookup);
 
-                // Cari caller: function/class di file ini yang mengandung baris call
-                var callerPathId = FindCallerPathId(call.Line, relativePath, result);
-
-                graph.UseRelEdges.Add(new GraphEdge
-                {
-                    From = callerPathId,
-                    To = resolved.PathId,
-                    Type = EdgeType.Call
-                });
-            }
-
-            // --- Type reference edges ---
-            foreach (var typeRef in result.TypeRefs)
-            {
-                var resolved = ResolveSymbol(typeRef.Name, relativePath, result, classLookup);
-                if (resolved is null) continue;
-
-                var callerPathId = FindCallerPathId(typeRef.Line, relativePath, result);
-
-                graph.UseRelEdges.Add(new GraphEdge
-                {
-                    From = callerPathId,
-                    To = resolved.PathId,
-                    Type = EdgeType.Call
-                });
-            }
-
-            // Progress Pass 2: 60-100%
             fileIdx++;
-            var pass2Progress = 60 + (int)((double)fileIdx / fileResults.Count * 40);
+            var pass2Progress = 60 + (int)((double)fileIdx / _fileResults.Count * 40);
             yield return new TreeSitterProgress<CodeGraph>
             {
                 Percentage = pass2Progress,
-                Message = $"Pass 2: {fileIdx}/{fileResults.Count} file di-scan — {Path.GetFileName(relativePath)}"
+                Message = $"Pass 2: {fileIdx}/{_fileResults.Count} file di-scan — {Path.GetFileName(relativePath)}"
             };
 
             await Task.Yield();
@@ -280,10 +140,270 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
         yield return new TreeSitterProgress<CodeGraph>
         {
             Percentage = 100,
-            Message = $"Analisis selesai. {graph.Nodes.Count} nodes, {graph.SourceRelEdges.Count + graph.UseRelEdges.Count} edges.",
+            Message = $"Analisis selesai. {_graph.Nodes.Count} nodes, "
+                    + $"{_graph.SourceRelEdges.Count + _graph.UseRelEdges.Count} edges.",
             IsCompleted = true,
-            Result = graph
+            Result = _graph
         };
+    }
+
+    // ================================================================
+    // Pass 1: Declaration Mapping
+    // ================================================================
+
+    /// <summary>
+    /// Proses satu file: bangun hierarchy, file/class/function nodes, dan SourceRelEdges.
+    /// </summary>
+    private void ProcessDeclarations(
+        string relativePath, LangQueryResult result,
+        bool usesNamespace, CodebaseSnapshot snapshot)
+    {
+        // --- Directory hierarchy ---
+        BuildDirectoryHierarchy(relativePath);
+
+        // --- Namespace hierarchy (jika bahasa mendukung) ---
+        if (usesNamespace)
+            BuildNamespaceHierarchy(result);
+
+        // --- File node ---
+        var filePathId = PathId.ForFile(relativePath);
+        _graph.Nodes.Add(new GraphNode
+        {
+            PathId = filePathId,
+            Label = Path.GetFileName(relativePath),
+            Type = NodeType.File
+        });
+
+        // Edge: parent directory → file (BelongsTo)
+        var parentDir = GetParentDirectory(relativePath);
+        if (!string.IsNullOrEmpty(parentDir))
+        {
+            _graph.SourceRelEdges.Add(new GraphEdge
+            {
+                From = PathId.ForDirectory(parentDir),
+                To = filePathId,
+                Type = EdgeType.BelongsTo
+            });
+        }
+
+        // --- Class nodes ---
+        foreach (var cls in result.Classes)
+        {
+            var symbolPath = cls.ParentNamespace;
+            var classPathId = PathId.Build(relativePath, symbolPath, cls.Name);
+
+            _graph.Nodes.Add(new GraphNode
+            {
+                PathId = classPathId,
+                Label = cls.Name,
+                Type = NodeType.Class
+            });
+
+            // Edge: parent → class (Define)
+            // Namespace language: namespace → class, otherwise: file → class
+            string classParentId;
+            if (usesNamespace && !string.IsNullOrEmpty(cls.ParentNamespace))
+                classParentId = PathId.ForNamespace(cls.ParentNamespace);
+            else
+                classParentId = filePathId;
+
+            _graph.SourceRelEdges.Add(new GraphEdge
+            {
+                From = classParentId,
+                To = classPathId,
+                Type = EdgeType.Define
+            });
+
+            _declaredClasses.Add(new SymbolDeclaration(
+                cls.Name, classPathId, relativePath, cls.ParentNamespace));
+        }
+
+        // --- Function nodes ---
+        foreach (var func in result.Functions)
+        {
+            var funcLabel = PathId.FormatFunction(func.Name, func.Params);
+            var symbolPath = BuildSymbolPath(func.ParentNamespace, func.ParentClass);
+            var funcPathId = PathId.Build(relativePath, symbolPath, funcLabel);
+
+            _graph.Nodes.Add(new GraphNode
+            {
+                PathId = funcPathId,
+                Label = funcLabel,
+                Type = NodeType.Function
+            });
+
+            // Edge: parent → function (Define)
+            string parentId;
+            if (!string.IsNullOrEmpty(func.ParentClass))
+            {
+                var classSymbolPath = func.ParentNamespace;
+                parentId = PathId.Build(relativePath, classSymbolPath, func.ParentClass);
+            }
+            else
+            {
+                parentId = filePathId;
+            }
+
+            _graph.SourceRelEdges.Add(new GraphEdge
+            {
+                From = parentId,
+                To = funcPathId,
+                Type = EdgeType.Define
+            });
+
+            _declaredFunctions.Add(new SymbolDeclaration(
+                func.Name, funcPathId, relativePath, func.ParentNamespace, func.ParentClass));
+        }
+
+        // --- Include edges ---
+        foreach (var inc in result.Includes)
+        {
+            var targetFile = ResolveIncludePath(inc.Path, relativePath, snapshot);
+            if (targetFile is not null)
+            {
+                _graph.SourceRelEdges.Add(new GraphEdge
+                {
+                    From = filePathId,
+                    To = PathId.ForFile(PathId.Normalize(targetFile)),
+                    Type = EdgeType.Include
+                });
+            }
+        }
+    }
+
+    // ================================================================
+    // Pass 2: Usage Scanning
+    // ================================================================
+
+    /// <summary>
+    /// Proses satu file: resolve calls/refs dan build UseRelEdges.
+    /// Arah: From = sumber definisi → To = tempat dipanggil.
+    /// </summary>
+    private void ProcessUsages(
+        string relativePath,
+        LangQueryResult result,
+        Dictionary<string, List<SymbolDeclaration>> funcLookup,
+        Dictionary<string, List<SymbolDeclaration>> classLookup)
+    {
+        // --- Function call edges ---
+        foreach (var call in result.Calls)
+        {
+            var resolved = ResolveSymbol(call.Name, relativePath, result, funcLookup);
+            if (resolved is null) continue;
+
+            var callerPathId = FindCallerPathId(call.Line, relativePath, result);
+
+            _graph.UseRelEdges.Add(new GraphEdge
+            {
+                From = resolved.PathId,    // sumber definisi
+                To = callerPathId,         // tempat dipanggil
+                Type = EdgeType.Call
+            });
+        }
+
+        // --- Type reference edges ---
+        foreach (var typeRef in result.TypeRefs)
+        {
+            var resolved = ResolveSymbol(typeRef.Name, relativePath, result, classLookup);
+            if (resolved is null) continue;
+
+            var callerPathId = FindCallerPathId(typeRef.Line, relativePath, result);
+
+            _graph.UseRelEdges.Add(new GraphEdge
+            {
+                From = resolved.PathId,    // sumber definisi
+                To = callerPathId,         // tempat dipanggil
+                Type = EdgeType.Call
+            });
+        }
+    }
+
+    // ================================================================
+    // Hierarchy builders
+    // ================================================================
+
+    /// <summary>
+    /// Bangun directory hierarchy nodes dan edges dari path segments.
+    /// </summary>
+    private void BuildDirectoryHierarchy(string relativePath)
+    {
+        var dirPath = Path.GetDirectoryName(relativePath)?.Replace('\\', '/');
+        if (string.IsNullOrEmpty(dirPath)) return;
+
+        var parts = dirPath.Split('/');
+        var accumulated = "";
+
+        for (int s = 0; s < parts.Length; s++)
+        {
+            accumulated = s == 0 ? parts[s] : $"{accumulated}/{parts[s]}";
+            var dirId = PathId.ForDirectory(accumulated);
+
+            if (_createdDirNodes.Add(dirId))
+            {
+                _graph.Nodes.Add(new GraphNode
+                {
+                    PathId = dirId,
+                    Label = parts[s],
+                    Type = NodeType.Directory
+                });
+
+                // Edge: parent directory → child directory (BelongsTo)
+                if (s > 0)
+                {
+                    var parentAccumulated = string.Join('/', parts.Take(s));
+                    _graph.SourceRelEdges.Add(new GraphEdge
+                    {
+                        Type = EdgeType.BelongsTo,
+                        From = PathId.ForDirectory(parentAccumulated),
+                        To = dirId
+                    });
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Bangun namespace hierarchy nodes dan edges.
+    /// </summary>
+    private void BuildNamespaceHierarchy(LangQueryResult result)
+    {
+        foreach (var ns in result.Namespaces)
+        {
+            var nsId = PathId.ForNamespace(ns.Name);
+            if (!_createdNsNodes.Add(nsId)) continue;
+
+            _graph.Nodes.Add(new GraphNode
+            {
+                PathId = nsId,
+                Label = ns.Name,
+                Type = NodeType.Namespace
+            });
+
+            // Buat edge dari parent namespace jika nested
+            var nsParts = ns.Name.Split('.');
+            if (nsParts.Length > 1)
+            {
+                var parentNs = string.Join('.', nsParts.Take(nsParts.Length - 1));
+                var parentNsId = PathId.ForNamespace(parentNs);
+
+                if (_createdNsNodes.Add(parentNsId))
+                {
+                    _graph.Nodes.Add(new GraphNode
+                    {
+                        PathId = parentNsId,
+                        Label = parentNs,
+                        Type = NodeType.Namespace
+                    });
+                }
+
+                _graph.SourceRelEdges.Add(new GraphEdge
+                {
+                    From = parentNsId,
+                    To = nsId,
+                    Type = EdgeType.BelongsTo
+                });
+            }
+        }
     }
 
     // ================================================================
@@ -291,114 +411,36 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
     // ================================================================
 
     /// <summary>
+    /// Reset semua state untuk analisis baru.
+    /// </summary>
+    private void ResetState()
+    {
+        _graph = new CodeGraph();
+        _declaredFunctions.Clear();
+        _declaredClasses.Clear();
+        _fileResults.Clear();
+        _createdDirNodes.Clear();
+        _createdNsNodes.Clear();
+    }
+
+    /// <summary>
     /// Instantiate lang query provider sesuai bahasa (tanpa factory pattern).
     /// </summary>
-    private static BaseLangQuery CreateLangQuery(AnalysisLanguage language) 
+    private static BaseLangQuery CreateLangQuery(AnalysisLanguage language)
         => language switch
         {
-            AnalysisLanguage.CSharp => new CSharpLangQuery(),
+            AnalysisLanguage.CSharp     => new CSharpLangQuery(),
             AnalysisLanguage.JavaScript => new JavaScriptLangQuery(),
-            AnalysisLanguage.Php => new PhpLangQuery(),
-            AnalysisLanguage.Cpp => new CppLangQuery(),
+            AnalysisLanguage.Php        => new PhpLangQuery(),
+            AnalysisLanguage.Cpp        => new CppLangQuery(),
+
             _ => throw new ArgumentOutOfRangeException(nameof(language))
         };
 
     /// <summary>
-    /// Bangun folder/namespace hierarchy nodes dan edges.
+    /// Ambil parent directory path dari relative path file.
     /// </summary>
-    private static void BuildFolderHierarchy(
-        string relativePath,
-        bool usesNamespace,
-        LangQueryResult result,
-        CodeGraph graph,
-        HashSet<string> createdFolderNodes,
-        HashSet<string> createdNamespaceNodes)
-    {
-        // Selalu bangun folder hierarchy dari path segments
-        var segments = Path.GetDirectoryName(relativePath)?.Replace('\\', '/');
-        if (!string.IsNullOrEmpty(segments))
-        {
-            var parts = segments.Split('/');
-            var accumulated = "";
-
-            for (int s = 0; s < parts.Length; s++)
-            {
-                accumulated = s == 0 ? parts[s] : $"{accumulated}/{parts[s]}";
-                var folderId = PathId.ForFolder(accumulated);
-
-                if (createdFolderNodes.Add(folderId))
-                {
-                    graph.Nodes.Add(new GraphNode
-                    {
-                        PathId = folderId,
-                        Label = parts[s],
-                        Type = NodeType.FolderOrNamespace
-                    });
-
-                    // Edge ke parent folder
-                    if (s > 0)
-                    {
-                        var parentAccumulated = string.Join('/', parts.Take(s));
-                        graph.SourceRelEdges.Add(new GraphEdge
-                        {
-                            From = PathId.ForFolder(parentAccumulated),
-                            To = folderId,
-                            Type = EdgeType.BelongsTo
-                        });
-                    }
-                }
-            }
-        }
-
-        // Jika bahasa pakai namespace, bangun juga namespace nodes
-        if (usesNamespace)
-        {
-            foreach (var ns in result.Namespaces)
-            {
-                var nsId = PathId.ForNamespace(ns.Name);
-                if (createdNamespaceNodes.Add(nsId))
-                {
-                    graph.Nodes.Add(new GraphNode
-                    {
-                        PathId = nsId,
-                        Label = ns.Name,
-                        Type = NodeType.FolderOrNamespace
-                    });
-
-                    // Buat edge dari parent namespace segment jika nested
-                    var nsParts = ns.Name.Split('.');
-                    if (nsParts.Length > 1)
-                    {
-                        var parentNs = string.Join('.', nsParts.Take(nsParts.Length - 1));
-                        var parentNsId = PathId.ForNamespace(parentNs);
-
-                        // Buat parent namespace juga jika belum ada
-                        if (createdNamespaceNodes.Add(parentNsId))
-                        {
-                            graph.Nodes.Add(new GraphNode
-                            {
-                                PathId = parentNsId,
-                                Label = parentNs,
-                                Type = NodeType.FolderOrNamespace
-                            });
-                        }
-
-                        graph.SourceRelEdges.Add(new GraphEdge
-                        {
-                            From = parentNsId,
-                            To = nsId,
-                            Type = EdgeType.BelongsTo
-                        });
-                    }
-                }
-            }
-        }
-    }
-
-    /// <summary>
-    /// Ambil parent folder path dari relative path file.
-    /// </summary>
-    private static string? GetParentFolder(string relativePath)
+    private static string? GetParentDirectory(string relativePath)
     {
         var dir = Path.GetDirectoryName(relativePath)?.Replace('\\', '/');
         return string.IsNullOrEmpty(dir) ? null : dir;
@@ -427,11 +469,11 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
     ///   3. Global → match jika unik (hanya 1 deklarasi dengan nama itu)
     ///   4. Ambiguous → skip (return null)
     /// </summary>
-    private static DeclaredSymbol? ResolveSymbol(
+    private static SymbolDeclaration? ResolveSymbol(
         string name,
         string callerFilePath,
         LangQueryResult callerResult,
-        Dictionary<string, List<DeclaredSymbol>> lookup)
+        Dictionary<string, List<SymbolDeclaration>> lookup)
     {
         if (!lookup.TryGetValue(name, out var candidates) || candidates.Count == 0)
             return null;
@@ -520,9 +562,9 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
             ?.RelativePath;
     }
 
-    // === Internal record untuk tracking deklarasi ===
+    // === Internal record ===
 
-    private sealed record DeclaredSymbol(
+    private sealed record SymbolDeclaration(
         string Name,
         string PathId,
         string FilePath,

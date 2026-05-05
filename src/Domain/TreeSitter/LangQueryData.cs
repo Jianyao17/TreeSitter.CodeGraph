@@ -5,15 +5,13 @@ namespace GithubAnalyzer.Analysis.Domain.TreeSitter;
 /// </summary>
 public sealed record LangQueryResult
 {
-    public List<NamespaceInfo> Namespaces { get; init; } = [];
-    public List<ClassInfo> Classes { get; init; } = [];
-    public List<FunctionInfo> Functions { get; init; } = [];
-    public List<CallInfo> Calls { get; init; } = [];
-    public List<TypeRefInfo> TypeRefs { get; init; } = [];
-    public List<IncludeInfo> Includes { get; init; } = [];
+    public List<NamespaceInfo>  Namespaces  { get; init; } = [];
+    public List<ClassInfo>      Classes     { get; init; } = [];
+    public List<FunctionInfo>   Functions   { get; init; } = [];
+    public List<CallInfo>       Calls       { get; init; } = [];
+    public List<TypeRefInfo>    TypeRefs    { get; init; } = [];
+    public List<IncludeInfo>    Includes    { get; init; } = [];
 }
-
-// === Info records hasil ekstraksi tree-sitter ===
 
 /// <summary>
 /// Deklarasi namespace/package yang ditemukan.

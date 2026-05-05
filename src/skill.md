@@ -165,7 +165,7 @@ public sealed class NamaBahasaLangQuery : BaseLangQuery
 {
     public NamaBahasaLangQuery() : base(AnalysisLanguage.NamaBahasaBaru) { }
 
-    // true jika bahasa punya namespace/package, false jika folder-based
+    // true jika bahasa punya namespace/package, false jika directory-based
     public override bool UsesNamespace => true; // atau false
 
     protected override List<NamespaceInfo> QueryNamespaces(Node root, Language lang)
@@ -349,8 +349,11 @@ Untuk setiap bahasa baru, sentuh **tepat 5 file** (3 baru, 2 modifikasi):
 ## Catatan Penting
 
 1. **Tree-sitter grammar berbeda untuk setiap bahasa.** Selalu verifikasi nama node dari grammar resmi.
-2. **Bahasa tanpa namespace** (JS, Python, Ruby, Go): set `UsesNamespace => false`, return `[]` dari `QueryNamespaces()`.
+2. **Bahasa tanpa namespace** (JS, Python, Ruby, Go): set `UsesNamespace => false`, return `[]` dari `QueryNamespaces()`. Hierarchy akan menggunakan directory.
 3. **Bahasa tanpa type annotation** (JS, Python, Ruby): gunakan `Params: ""` sehingga PathId function menjadi `functionName()`.
 4. **Normalisasi simbol bahasa**: PHP `\` → `.`, C++ `::` → `.` untuk konsistensi PathId.
 5. **Scope resolution** di Pass 2 sudah ditangani oleh `TreeSitterAnalyzer` — tidak perlu diimplementasi di LangQuery.
 6. **Pastikan tree-sitter native library tersedia** untuk bahasa target. Cek daftar di README TreeSitter.DotNet.
+7. **NodeType**: Gunakan `NodeType.Directory` untuk folder dan `NodeType.Namespace` untuk namespace/package.
+8. **PathId format**: Separator `::` tersedia sebagai `PathId.Separator`. Format: Directory=`path::`, File=`path::`, Namespace=`::name`, Symbol=`path::symbol`.
+9. **Internal record**: Deklarasi yang ditemukan di-track sebagai `SymbolDeclaration` (bukan `DeclaredSymbol`).

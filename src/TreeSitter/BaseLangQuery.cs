@@ -24,7 +24,7 @@ public abstract class BaseLangQuery : IDisposable
 
     /// <summary>
     /// Apakah bahasa ini menggunakan namespace (C#, PHP, C++)
-    /// atau folder hierarchy (JavaScript).
+    /// atau directory hierarchy (JavaScript).
     /// </summary>
     public abstract bool UsesNamespace { get; }
 
@@ -42,12 +42,12 @@ public abstract class BaseLangQuery : IDisposable
 
         return new LangQueryResult
         {
-            Namespaces = QueryNamespaces(root, lang),
-            Classes = QueryClasses(root, lang),
-            Functions = QueryFunctions(root, lang),
-            Calls = QueryCalls(root, lang),
-            TypeRefs = QueryTypeRefs(root, lang),
-            Includes = QueryIncludes(root, lang)
+            Namespaces  = QueryNamespaces(root, lang),
+            Classes     = QueryClasses(root, lang),
+            Functions   = QueryFunctions(root, lang),
+            Calls       = QueryCalls(root, lang),
+            TypeRefs    = QueryTypeRefs(root, lang),
+            Includes    = QueryIncludes(root, lang)
         };
     }
 

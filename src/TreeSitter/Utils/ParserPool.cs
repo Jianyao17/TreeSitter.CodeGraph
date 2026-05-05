@@ -37,10 +37,10 @@ public sealed class ParserPool : IDisposable
     /// </summary>
     private static string MapLanguageId(AnalysisLanguage language) => language switch
     {
-        AnalysisLanguage.CSharp => "c-sharp",
+        AnalysisLanguage.CSharp     => "c-sharp",
         AnalysisLanguage.JavaScript => "javascript",
-        AnalysisLanguage.Php => "php",
-        AnalysisLanguage.Cpp => "cpp",
+        AnalysisLanguage.Php        => "php",
+        AnalysisLanguage.Cpp        => "cpp",
         
         _ => throw new ArgumentOutOfRangeException(nameof(language), 
             $"Bahasa '{language}' belum didukung.")

@@ -125,13 +125,13 @@ public class TreeSitterAnalyzerTests
     }
 
     [Fact]
-    public async Task AnalyzeAsync_CSharp_HasFolderNodes()
+    public async Task AnalyzeAsync_CSharp_HasDirectoryNodes()
     {
         try
         {
             var (graph, _) = await RunAnalysisAsync("CSharp", AnalysisLanguage.CSharp, [".cs"]);
-            var folderNodes = graph.Nodes.Where(n => n.Type == NodeType.FolderOrNamespace).ToList();
-            Assert.NotEmpty(folderNodes);
+            var dirNodes = graph.Nodes.Where(n => n.Type == NodeType.Directory).ToList();
+            Assert.NotEmpty(dirNodes);
         }
         catch (DllNotFoundException)
         {
@@ -179,13 +179,14 @@ public class TreeSitterAnalyzerTests
                 switch (node.Type)
                 {
                     case NodeType.File:
-                        Assert.DoesNotContain("::", node.PathId);
-                        break;
-                    case NodeType.FolderOrNamespace when node.PathId.Contains("/"):
-                        // Folder node ends with ::
+                        // File PathId ends with ::
                         Assert.EndsWith("::", node.PathId);
                         break;
-                    case NodeType.FolderOrNamespace when node.PathId.StartsWith("::"):
+                    case NodeType.Directory:
+                        // Directory node ends with ::
+                        Assert.EndsWith("::", node.PathId);
+                        break;
+                    case NodeType.Namespace:
                         // Namespace node starts with ::
                         Assert.StartsWith("::", node.PathId);
                         break;

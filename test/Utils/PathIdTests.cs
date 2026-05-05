@@ -3,7 +3,7 @@ using GithubAnalyzer.Analysis.TreeSitter.Utils;
 namespace GithubAnalyzer.Analysis.Tests.Utils;
 
 /// <summary>
-/// Menguji PathId static methods: Build, ForFolder, ForNamespace, ForFile,
+/// Menguji PathId static methods: Build, ForDirectory, ForNamespace, ForFile,
 /// FormatFunction, Normalize, dan konsistensi cross-platform.
 /// Contoh: PathId.Build("src/User.cs", "MyApp", "UserService") → "src/User.cs::MyApp.UserService".
 /// </summary>
@@ -31,17 +31,17 @@ public class PathIdTests
     }
 
     [Fact]
-    public void ForFolder_EndsWithDoubleColon()
+    public void ForDirectory_EndsWithDoubleColon()
     {
-        var result = PathId.ForFolder("src/Controllers");
+        var result = PathId.ForDirectory("src/Controllers");
         Assert.Equal("src/Controllers::", result);
         Assert.EndsWith("::", result);
     }
 
     [Fact]
-    public void ForFolder_NormalizesBackslash()
+    public void ForDirectory_NormalizesBackslash()
     {
-        var result = PathId.ForFolder("src\\Controllers");
+        var result = PathId.ForDirectory("src\\Controllers");
         Assert.Equal("src/Controllers::", result);
         Assert.DoesNotContain("\\", result);
     }
@@ -55,11 +55,11 @@ public class PathIdTests
     }
 
     [Fact]
-    public void ForFile_NormalizesOnly_NoDoubleColon()
+    public void ForFile_EndsWithDoubleColon()
     {
         var result = PathId.ForFile("src\\Controllers\\UserController.cs");
-        Assert.Equal("src/Controllers/UserController.cs", result);
-        Assert.DoesNotContain("::", result);
+        Assert.Equal("src/Controllers/UserController.cs::", result);
+        Assert.EndsWith("::", result);
     }
 
     [Theory]
