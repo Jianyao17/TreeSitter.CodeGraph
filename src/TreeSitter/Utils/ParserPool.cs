@@ -41,7 +41,9 @@ public sealed class ParserPool : IDisposable
         AnalysisLanguage.JavaScript => "javascript",
         AnalysisLanguage.Php => "php",
         AnalysisLanguage.Cpp => "cpp",
-        _ => throw new ArgumentOutOfRangeException(nameof(language), $"Bahasa '{language}' belum didukung.")
+        
+        _ => throw new ArgumentOutOfRangeException(nameof(language), 
+            $"Bahasa '{language}' belum didukung.")
     };
 
     public void Dispose()

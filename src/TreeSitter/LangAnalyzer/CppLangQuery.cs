@@ -75,17 +75,26 @@ public sealed class CppLangQuery : BaseLangQuery
             var line = nameNode.StartPosition.Row;
 
             // C++ qualified names: Class::Method → ambil nama method saja
+            // dan simpan class qualifier sebagai fallback ParentClass
             var fnName = nameNode.Text;
+            string? qualifiedClass = null;
             if (fnName.Contains("::"))
+            {
+                qualifiedClass = fnName[..fnName.LastIndexOf("::")];
                 fnName = fnName[(fnName.LastIndexOf("::") + 2)..];
+            }
 
             var paramTypes = paramsNode is not null
                 ? ExtractParamTypes(CppQueries.ParameterType, paramsNode, lang)
                 : "";
 
+            // Gunakan FindParentClass untuk fungsi di dalam class body,
+            // fallback ke qualified name untuk out-of-class definitions
+            var parentClass = FindParentClass(line, classes) ?? qualifiedClass;
+
             result.Add(new FunctionInfo(
                 Name: fnName,
-                ParentClass: FindParentClass(line, classes),
+                ParentClass: parentClass,
                 ParentNamespace: FindParentNamespace(line, namespaces),
                 Params: paramTypes,
                 StartLine: line,
