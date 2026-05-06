@@ -29,26 +29,29 @@ public enum EdgeType
 {
     /// <summary>
     /// Menunjukkan hubungan kepemilikan atau hirarki.
-    /// Contoh: Folder → File, FolderParrent → FolderChild.
+    /// Arah: Parent → Child.
+    /// Contoh: Directory → File, ParentDir → ChildDir, Namespace → File.
     /// </summary>
     BelongsTo,
 
     /// <summary>
     /// Menunjukkan hubungan definisi atau deklarasi.
-    /// Contoh: File → Function, File → Class, Class → Function.
+    /// Arah: Container → Symbol.
+    /// Contoh: File → Class, File → Function, Class → Function.
     /// </summary>
     Define,
 
     /// <summary>
     /// Menunjukkan hubungan pemanggilan atau penggunaan.
-    /// Contoh: Function1 → Function2, Class1 → Class2, Func1 → Class1, File1 → Class1, File1 → Func1.
+    /// Arah: Definition → Caller (sumber definisi → tempat dipanggil).
+    /// Contoh: FuncA → FuncB (FuncA dipanggil oleh FuncB).
     /// </summary>
     Call,
 
     /// <summary>
     /// Menunjukkan hubungan inklusi atau import.
     /// Khusus untuk bahasa yang mendukung mekanisme include/require (misal: PHP, C/C++).
-    /// Example: File → File (include/require).
+    /// Contoh: File → File (include/require).
     /// </summary>
     Include,
 }
