@@ -20,13 +20,15 @@ public sealed record NamespaceInfo(string Name, int StartLine, int EndLine);
 
 /// <summary>
 /// Deklarasi class/interface yang ditemukan.
+/// ParentChain berisi dot-chain parent containers (class/function), e.g. "Outer.Inner".
 /// </summary>
-public sealed record ClassInfo(string Name, string? ParentNamespace, int StartLine, int EndLine);
+public sealed record ClassInfo(string Name, string? ParentChain, string? ParentNamespace, int StartLine, int EndLine);
 
 /// <summary>
 /// Deklarasi function/method yang ditemukan.
+/// ParentChain berisi dot-chain parent containers (class/function), e.g. "Outer.Inner" atau "Outer.Method()".
 /// </summary>
-public sealed record FunctionInfo(string Name, string? ParentClass, string? ParentNamespace, string Params, int StartLine, int EndLine);
+public sealed record FunctionInfo(string Name, string? ParentChain, string? ParentNamespace, string Params, int StartLine, int EndLine);
 
 /// <summary>
 /// Pemanggilan function yang ditemukan (usage).

@@ -81,10 +81,10 @@ function validateInput(input) {
             // Should detect: constructor, getUser, createUser (methods), formatResponse (arrow), validateInput (function)
             Assert.True(result.Functions.Count >= 4, $"Expected at least 4 functions, got {result.Functions.Count}");
 
-            // Methods should have ParentClass
+            // Methods should have ParentChain
             var getUser = result.Functions.FirstOrDefault(f => f.Name == "getUser");
             Assert.NotNull(getUser);
-            Assert.Equal("UserController", getUser.ParentClass);
+            Assert.Equal("UserController", getUser.ParentChain);
             Assert.Equal("", getUser.Params); // JS: no type annotation
 
             // Arrow function
@@ -94,7 +94,7 @@ function validateInput(input) {
             // Regular function
             var validateInput = result.Functions.FirstOrDefault(f => f.Name == "validateInput");
             Assert.NotNull(validateInput);
-            Assert.Null(validateInput.ParentClass);
+            Assert.Null(validateInput.ParentChain);
         }
         catch (DllNotFoundException)
         {

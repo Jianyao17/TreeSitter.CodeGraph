@@ -80,15 +80,15 @@ void UserService::save(UserData user) {
         {
             using var query = new CppLangQuery();
             var result = query.ExtractAll(SampleCode);
-            // UserService::findById → Name should be "findById", ParentClass should be "UserService"
+            // UserService::findById → Name should be "findById", ParentChain should be "UserService"
             var findById = result.Functions.FirstOrDefault(f => f.Name == "findById");
             Assert.NotNull(findById);
             Assert.Contains("int", findById.Params);
-            Assert.Equal("UserService", findById.ParentClass);
+            Assert.Equal("UserService", findById.ParentChain);
 
             var save = result.Functions.FirstOrDefault(f => f.Name == "save");
             Assert.NotNull(save);
-            Assert.Equal("UserService", save.ParentClass);
+            Assert.Equal("UserService", save.ParentChain);
         }
         catch (DllNotFoundException)
         {

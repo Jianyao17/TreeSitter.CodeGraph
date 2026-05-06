@@ -48,11 +48,11 @@ public sealed class CSharpLangQuery : BaseLangQuery
             if (node is null) continue;
 
             var line = node.StartPosition.Row;
-            var parentNs = FindParentNamespace(line, namespaces);
 
             result.Add(new ClassInfo(
                 Name: node.Text,
-                ParentNamespace: parentNs,
+                ParentChain: null,
+                ParentNamespace: FindParentNamespace(line, namespaces),
                 StartLine: line,
                 EndLine: node.Parent?.EndPosition.Row ?? node.EndPosition.Row
             ));
@@ -65,7 +65,6 @@ public sealed class CSharpLangQuery : BaseLangQuery
     {
         var result = new List<FunctionInfo>();
         var namespaces = QueryNamespaces(root, lang);
-        var classes = QueryClasses(root, lang);
 
         foreach (var match in RunQuery(CSharpQueries.Function, root, lang))
         {
@@ -75,8 +74,6 @@ public sealed class CSharpLangQuery : BaseLangQuery
             if (nameNode is null) continue;
 
             var line = nameNode.StartPosition.Row;
-            var parentNs = FindParentNamespace(line, namespaces);
-            var parentClass = FindParentClass(line, classes);
 
             // Extract parameter types
             var paramTypes = paramsNode is not null
@@ -85,8 +82,8 @@ public sealed class CSharpLangQuery : BaseLangQuery
 
             result.Add(new FunctionInfo(
                 Name: nameNode.Text,
-                ParentClass: parentClass,
-                ParentNamespace: parentNs,
+                ParentChain: null,
+                ParentNamespace: FindParentNamespace(line, namespaces),
                 Params: paramTypes,
                 StartLine: line,
                 EndLine: nameNode.Parent?.EndPosition.Row ?? nameNode.EndPosition.Row

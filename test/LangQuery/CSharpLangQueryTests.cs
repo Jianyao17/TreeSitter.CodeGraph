@@ -16,6 +16,10 @@ namespace MyApp.Services
 {
     public class UserService
     {
+        public class User {
+            public void PerformAction() { }
+        }
+        
         private readonly List<string> _users = new();
 
         public UserService()
@@ -39,6 +43,10 @@ namespace MyApp.Services
         {
             var service = new UserService();
             service.FindById(1);
+
+            int GenerateId() => new Random().Next(1000);
+
+            var orderId = GenerateId();
         }
     }
 }";
@@ -68,11 +76,18 @@ namespace MyApp.Services
             using var query = new CSharpLangQuery();
             var result = query.ExtractAll(SampleCode);
 
-            Assert.Equal(2, result.Classes.Count);
+            // 3 classes: UserService, User (nested), OrderService
+            Assert.Equal(3, result.Classes.Count);
 
             var userService = result.Classes.First(c => c.Name == "UserService");
             Assert.Equal("MyApp.Services", userService.ParentNamespace);
+            Assert.Null(userService.ParentChain);
             Assert.True(userService.EndLine > userService.StartLine);
+
+            // Nested class: User inside UserService
+            var user = result.Classes.First(c => c.Name == "User");
+            Assert.Equal("MyApp.Services", user.ParentNamespace);
+            Assert.Equal("UserService", user.ParentChain);
 
             Assert.Contains(result.Classes, c => c.Name == "OrderService");
         }
@@ -93,7 +108,7 @@ namespace MyApp.Services
             Assert.True(result.Functions.Count >= 3, $"Expected at least 3 functions, got {result.Functions.Count}");
 
             var findById = result.Functions.First(f => f.Name == "FindById");
-            Assert.Equal("UserService", findById.ParentClass);
+            Assert.Equal("UserService", findById.ParentChain);
             Assert.Equal("int", findById.Params);
             Assert.Equal("MyApp.Services", findById.ParentNamespace);
 
@@ -115,7 +130,7 @@ namespace MyApp.Services
             using var query = new CSharpLangQuery();
             var result = query.ExtractAll(SampleCode);
 
-            Assert.Contains(result.Functions, f => f.Name == "UserService" && f.ParentClass == "UserService");
+            Assert.Contains(result.Functions, f => f.Name == "UserService" && f.ParentChain == "UserService");
         }
         catch (DllNotFoundException)
         {

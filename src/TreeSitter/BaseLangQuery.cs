@@ -31,6 +31,7 @@ public abstract class BaseLangQuery : IDisposable
     /// <summary>
     /// Template method: parse source code dan extract semua informasi.
     /// Mengembalikan LangQueryResult yang standar.
+    /// Post-processing: hitung parent chain untuk nested elements.
     /// </summary>
     public LangQueryResult ExtractAll(string sourceCode)
     {
@@ -40,7 +41,7 @@ public abstract class BaseLangQuery : IDisposable
         var root = tree.RootNode;
         var lang = _pool.Language;
 
-        return new LangQueryResult
+        var raw = new LangQueryResult
         {
             Namespaces  = QueryNamespaces(root, lang),
             Classes     = QueryClasses(root, lang),
@@ -49,6 +50,8 @@ public abstract class BaseLangQuery : IDisposable
             TypeRefs    = QueryTypeRefs(root, lang),
             Includes    = QueryIncludes(root, lang)
         };
+
+        return EnrichParentChains(raw);
     }
 
     // === Abstract query methods — wajib diimplementasi tiap bahasa ===
@@ -120,18 +123,6 @@ public abstract class BaseLangQuery : IDisposable
     }
 
     /// <summary>
-    /// Tentukan parent class dari posisi node dalam source code.
-    /// </summary>
-    protected static string? FindParentClass(int nodeLine, List<ClassInfo> classes)
-    {
-        return classes
-            .Where(c => nodeLine >= c.StartLine && nodeLine <= c.EndLine)
-            .OrderByDescending(c => c.StartLine)
-            .Select(c => c.Name)
-            .FirstOrDefault();
-    }
-
-    /// <summary>
     /// Extract parameter types dari parameter list node.
     /// Digunakan oleh bahasa yang punya type annotation (C#, PHP, C++).
     /// </summary>
@@ -156,6 +147,81 @@ public abstract class BaseLangQuery : IDisposable
         }
 
         return string.Join(",", types);
+    }
+
+    // === Post-processing: compute parent chains ===
+
+    /// <summary>
+    /// Post-process: hitung ParentChain untuk semua classes dan functions.
+    /// ParentChain = dot-separated chain of parent containers.
+    /// </summary>
+    private static LangQueryResult EnrichParentChains(LangQueryResult raw)
+    {
+        // 1. Enrich classes: ParentChain = chain of enclosing classes
+        var enrichedClasses = raw.Classes
+            .Select(c => c with
+            {
+                ParentChain = FindParentClassChain(c.StartLine, c.EndLine, raw.Classes)
+            })
+            .ToList();
+
+        // 2. Enrich functions: ParentChain = chain of enclosing classes + functions
+        // Jika post-processing tidak menemukan container, pertahankan nilai asli
+        // (contoh: C++ out-of-class definition pakai qualified name sebagai fallback)
+        var enrichedFunctions = raw.Functions
+            .Select(f =>
+            {
+                var computed = FindParentContainerChain(
+                    f.StartLine, f.EndLine, enrichedClasses, raw.Functions);
+                return f with { ParentChain = computed ?? f.ParentChain };
+            })
+            .ToList();
+
+        return raw with { Classes = enrichedClasses, Functions = enrichedFunctions };
+    }
+
+    /// <summary>
+    /// Cari chain parent classes (outer → inner) yang mengandung range ini,
+    /// excluding diri sendiri. Contoh: "UserService.User" untuk class Address.
+    /// </summary>
+    private static string? FindParentClassChain(
+        int startLine, int endLine, List<ClassInfo> allClasses)
+    {
+        var parents = allClasses
+            .Where(c => startLine > c.StartLine && endLine <= c.EndLine)
+            .OrderBy(c => c.StartLine)
+            .Select(c => c.Name);
+
+        var chain = string.Join(".", parents);
+        return string.IsNullOrEmpty(chain) ? null : chain;
+    }
+
+    /// <summary>
+    /// Cari chain semua parent containers (classes + functions) yang mengandung range ini.
+    /// Contoh: "UserService.User.Process()" untuk local function.
+    /// </summary>
+    private static string? FindParentContainerChain(
+        int startLine, int endLine,
+        List<ClassInfo> classes, List<FunctionInfo> functions)
+    {
+        var containers = new List<(int StartLine, string Label)>();
+
+        foreach (var c in classes)
+        {
+            if (startLine > c.StartLine && endLine <= c.EndLine)
+                containers.Add((c.StartLine, c.Name));
+        }
+
+        foreach (var f in functions)
+        {
+            if (startLine > f.StartLine && endLine <= f.EndLine)
+                containers.Add((f.StartLine, PathId.FormatFunction(f.Name, f.Params)));
+        }
+
+        if (containers.Count == 0) return null;
+
+        return string.Join(".",
+            containers.OrderBy(c => c.StartLine).Select(c => c.Label));
     }
 
     public void Dispose()

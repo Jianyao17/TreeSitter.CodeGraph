@@ -29,6 +29,9 @@ public static class CSharpQueries
             (constructor_declaration
                 name: (identifier) @ctor_name
                 parameters: (parameter_list) @params)
+            (local_function_statement
+                name: (identifier) @fn_name
+                parameters: (parameter_list) @params)
         ]";
 
     // === Pass 2: Usage ===

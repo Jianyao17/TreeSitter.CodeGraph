@@ -32,6 +32,7 @@ public sealed class JavaScriptLangQuery : BaseLangQuery
 
             result.Add(new ClassInfo(
                 Name: capture.Node.Text,
+                ParentChain: null,
                 ParentNamespace: null,
                 StartLine: capture.Node.StartPosition.Row,
                 EndLine: capture.Node.Parent?.EndPosition.Row ?? capture.Node.EndPosition.Row
@@ -44,7 +45,6 @@ public sealed class JavaScriptLangQuery : BaseLangQuery
     protected override List<FunctionInfo> QueryFunctions(Node root, Language lang)
     {
         var result = new List<FunctionInfo>();
-        var classes = QueryClasses(root, lang);
 
         // Regular functions dan methods
         foreach (var match in RunQuery(JavaScriptQueries.Function, root, lang))
@@ -56,7 +56,7 @@ public sealed class JavaScriptLangQuery : BaseLangQuery
 
             result.Add(new FunctionInfo(
                 Name: nameNode.Text,
-                ParentClass: FindParentClass(line, classes),
+                ParentChain: null,
                 ParentNamespace: null,
                 Params: "", // JS tanpa type annotation
                 StartLine: line,
@@ -74,7 +74,7 @@ public sealed class JavaScriptLangQuery : BaseLangQuery
 
             result.Add(new FunctionInfo(
                 Name: nameNode.Text,
-                ParentClass: FindParentClass(line, classes),
+                ParentChain: null,
                 ParentNamespace: null,
                 Params: "",
                 StartLine: line,

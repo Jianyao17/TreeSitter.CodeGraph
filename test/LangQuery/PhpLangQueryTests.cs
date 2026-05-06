@@ -89,7 +89,7 @@ class OrderService
             Assert.True(result.Functions.Count >= 3);
             var f = result.Functions.First(f => f.Name == "findById");
             Assert.Contains("int", f.Params);
-            Assert.Equal("UserService", f.ParentClass);
+            Assert.Equal("UserService", f.ParentChain);
         }
         catch (DllNotFoundException)
         {

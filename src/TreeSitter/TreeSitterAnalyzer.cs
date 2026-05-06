@@ -189,7 +189,7 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
         // --- Class nodes ---
         foreach (var cls in result.Classes)
         {
-            var symbolPath = cls.ParentNamespace;
+            var symbolPath = BuildSymbolPath(cls.ParentNamespace, cls.ParentChain);
             var classPathId = PathId.Build(relativePath, symbolPath, cls.Name);
 
             _graph.Nodes.Add(new GraphNode
@@ -200,9 +200,16 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
             });
 
             // Edge: parent → class (Define)
-            // Namespace language: namespace → class, otherwise: file → class
             string classParentId;
-            if (usesNamespace && !string.IsNullOrEmpty(cls.ParentNamespace))
+            if (!string.IsNullOrEmpty(cls.ParentChain))
+            {
+                // Nested class: parent = immediate parent container
+                var parentOfChain = GetParentOfChain(cls.ParentChain);
+                var immediateParent = GetLastSegment(cls.ParentChain);
+                var parentSymbolPath = BuildSymbolPath(cls.ParentNamespace, parentOfChain);
+                classParentId = PathId.Build(relativePath, parentSymbolPath, immediateParent);
+            }
+            else if (usesNamespace && !string.IsNullOrEmpty(cls.ParentNamespace))
                 classParentId = PathId.ForNamespace(cls.ParentNamespace);
             else
                 classParentId = filePathId;
@@ -222,7 +229,7 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
         foreach (var func in result.Functions)
         {
             var funcLabel = PathId.FormatFunction(func.Name, func.Params);
-            var symbolPath = BuildSymbolPath(func.ParentNamespace, func.ParentClass);
+            var symbolPath = BuildSymbolPath(func.ParentNamespace, func.ParentChain);
             var funcPathId = PathId.Build(relativePath, symbolPath, funcLabel);
 
             _graph.Nodes.Add(new GraphNode
@@ -234,10 +241,13 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
 
             // Edge: parent → function (Define)
             string parentId;
-            if (!string.IsNullOrEmpty(func.ParentClass))
+            if (!string.IsNullOrEmpty(func.ParentChain))
             {
-                var classSymbolPath = func.ParentNamespace;
-                parentId = PathId.Build(relativePath, classSymbolPath, func.ParentClass);
+                // Function inside class/function: parent = immediate parent container
+                var parentOfChain = GetParentOfChain(func.ParentChain);
+                var immediateParent = GetLastSegment(func.ParentChain);
+                var parentSymbolPath = BuildSymbolPath(func.ParentNamespace, parentOfChain);
+                parentId = PathId.Build(relativePath, parentSymbolPath, immediateParent);
             }
             else
             {
@@ -252,7 +262,7 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
             });
 
             _declaredFunctions.Add(new SymbolDeclaration(
-                func.Name, funcPathId, relativePath, func.ParentNamespace, func.ParentClass));
+                func.Name, funcPathId, relativePath, func.ParentNamespace, func.ParentChain));
         }
 
         // --- Include edges ---
@@ -518,7 +528,7 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
         if (func is not null)
         {
             var funcLabel = PathId.FormatFunction(func.Name, func.Params);
-            var symbolPath = BuildSymbolPath(func.ParentNamespace, func.ParentClass);
+            var symbolPath = BuildSymbolPath(func.ParentNamespace, func.ParentChain);
             return PathId.Build(relativePath, symbolPath, funcLabel);
         }
 
@@ -529,7 +539,10 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
             .FirstOrDefault();
 
         if (cls is not null)
-            return PathId.Build(relativePath, cls.ParentNamespace, cls.Name);
+        {
+            var symbolPath = BuildSymbolPath(cls.ParentNamespace, cls.ParentChain);
+            return PathId.Build(relativePath, symbolPath, cls.Name);
+        }
 
         // Fallback ke file
         return PathId.ForFile(relativePath);
@@ -569,7 +582,27 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
         string PathId,
         string FilePath,
         string? Namespace,
-        string? ParentClass = null);
+        string? ParentChain = null);
+
+    // === Chain helpers ===
+
+    /// <summary>
+    /// "UserService.User" → "UserService", "UserService" → null
+    /// </summary>
+    private static string? GetParentOfChain(string chain)
+    {
+        var idx = chain.LastIndexOf('.');
+        return idx < 0 ? null : chain[..idx];
+    }
+
+    /// <summary>
+    /// "UserService.User" → "User", "UserService" → "UserService"
+    /// </summary>
+    private static string GetLastSegment(string chain)
+    {
+        var idx = chain.LastIndexOf('.');
+        return idx < 0 ? chain : chain[(idx + 1)..];
+    }
 
     public void Dispose()
     {

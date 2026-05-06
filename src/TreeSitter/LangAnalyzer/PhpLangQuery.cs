@@ -53,6 +53,7 @@ public sealed class PhpLangQuery : BaseLangQuery
 
             result.Add(new ClassInfo(
                 Name: node.Text,
+                ParentChain: null,
                 ParentNamespace: FindParentNamespace(line, namespaces),
                 StartLine: line,
                 EndLine: node.Parent?.EndPosition.Row ?? node.EndPosition.Row
@@ -66,7 +67,6 @@ public sealed class PhpLangQuery : BaseLangQuery
     {
         var result = new List<FunctionInfo>();
         var namespaces = QueryNamespaces(root, lang);
-        var classes = QueryClasses(root, lang);
 
         foreach (var match in RunQuery(PhpQueries.Function, root, lang))
         {
@@ -83,7 +83,7 @@ public sealed class PhpLangQuery : BaseLangQuery
 
             result.Add(new FunctionInfo(
                 Name: nameNode.Text,
-                ParentClass: FindParentClass(line, classes),
+                ParentChain: null,
                 ParentNamespace: FindParentNamespace(line, namespaces),
                 Params: paramTypes,
                 StartLine: line,

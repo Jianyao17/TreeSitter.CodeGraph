@@ -51,6 +51,7 @@ public sealed class CppLangQuery : BaseLangQuery
 
             result.Add(new ClassInfo(
                 Name: node.Text,
+                ParentChain: null,
                 ParentNamespace: FindParentNamespace(line, namespaces),
                 StartLine: line,
                 EndLine: node.Parent?.EndPosition.Row ?? node.EndPosition.Row
@@ -64,7 +65,6 @@ public sealed class CppLangQuery : BaseLangQuery
     {
         var result = new List<FunctionInfo>();
         var namespaces = QueryNamespaces(root, lang);
-        var classes = QueryClasses(root, lang);
 
         foreach (var match in RunQuery(CppQueries.Function, root, lang))
         {
@@ -75,7 +75,7 @@ public sealed class CppLangQuery : BaseLangQuery
             var line = nameNode.StartPosition.Row;
 
             // C++ qualified names: Class::Method → ambil nama method saja
-            // dan simpan class qualifier sebagai fallback ParentClass
+            // dan simpan class qualifier sebagai fallback ParentChain
             var fnName = nameNode.Text;
             string? qualifiedClass = null;
             if (fnName.Contains("::"))
@@ -88,13 +88,11 @@ public sealed class CppLangQuery : BaseLangQuery
                 ? ExtractParamTypes(CppQueries.ParameterType, paramsNode, lang)
                 : "";
 
-            // Gunakan FindParentClass untuk fungsi di dalam class body,
-            // fallback ke qualified name untuk out-of-class definitions
-            var parentClass = FindParentClass(line, classes) ?? qualifiedClass;
-
+            // Out-of-class definitions: gunakan qualified name sebagai ParentChain
+            // Post-processing akan override untuk in-class definitions
             result.Add(new FunctionInfo(
                 Name: fnName,
-                ParentClass: parentClass,
+                ParentChain: qualifiedClass,
                 ParentNamespace: FindParentNamespace(line, namespaces),
                 Params: paramTypes,
                 StartLine: line,
