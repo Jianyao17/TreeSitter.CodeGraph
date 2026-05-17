@@ -155,7 +155,11 @@ public class ContentFormatTests
     [Fact]
     public async Task BinaryFile_DoesNotCrashParser()
     {
-        var tempFile = Path.Combine(Path.GetTempPath(), $"binary_{Guid.NewGuid()}.cs");
+        // Use an isolated subdirectory so CodebaseReader doesn't enumerate /tmp directly
+        // (on Linux /tmp contains system-owned dirs like systemd-private-* that deny access)
+        var tempDir  = Path.Combine(Path.GetTempPath(), $"GaTest_{Guid.NewGuid():N}");
+        var tempFile = Path.Combine(tempDir, "binary.cs");
+        Directory.CreateDirectory(tempDir);
         try
         {
             await File.WriteAllBytesAsync(tempFile, new byte[] { 0xFF, 0xFE, 0x00, 0x01 });
@@ -165,7 +169,7 @@ public class ContentFormatTests
                 AllowedExtensions = [".cs"]
             };
 
-            var snapshot = await _reader.ReadAsync(Path.GetDirectoryName(tempFile)!, options);
+            var snapshot = await _reader.ReadAsync(tempDir, options);
             var file = snapshot.Files.FirstOrDefault(f => f.AbsolutePath == tempFile);
             if (file is not null)
             {
@@ -188,14 +192,18 @@ public class ContentFormatTests
         }
         finally
         {
-            if (File.Exists(tempFile)) File.Delete(tempFile);
+            if (Directory.Exists(tempDir)) Directory.Delete(tempDir, recursive: true);
         }
     }
 
     [Fact]
     public async Task EmptyFile_ReturnsEmptyContent_NoThrow()
     {
-        var tempFile = Path.Combine(Path.GetTempPath(), $"empty_{Guid.NewGuid()}.cs");
+        // Use an isolated subdirectory so CodebaseReader doesn't enumerate /tmp directly
+        // (on Linux /tmp contains system-owned dirs like systemd-private-* that deny access)
+        var tempDir  = Path.Combine(Path.GetTempPath(), $"GaTest_{Guid.NewGuid():N}");
+        var tempFile = Path.Combine(tempDir, "empty.cs");
+        Directory.CreateDirectory(tempDir);
         try
         {
             await File.WriteAllTextAsync(tempFile, string.Empty);
@@ -204,7 +212,7 @@ public class ContentFormatTests
             {
                 AllowedExtensions = [".cs"]
             };
-            var snapshot = await _reader.ReadAsync(Path.GetDirectoryName(tempFile)!, options);
+            var snapshot = await _reader.ReadAsync(tempDir, options);
 
             var file = snapshot.Files.FirstOrDefault(f => f.AbsolutePath == tempFile);
             Assert.NotNull(file);
@@ -213,7 +221,7 @@ public class ContentFormatTests
         }
         finally
         {
-            if (File.Exists(tempFile)) File.Delete(tempFile);
+            if (Directory.Exists(tempDir)) Directory.Delete(tempDir, recursive: true);
         }
     }
 
