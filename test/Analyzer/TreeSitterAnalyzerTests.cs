@@ -194,6 +194,12 @@ public class TreeSitterAnalyzerTests
                     case NodeType.Function:
                         Assert.Contains("::", node.PathId);
                         Assert.False(node.PathId.EndsWith("::"), $"Class/Function PathId should not end with :: : {node.PathId}");
+
+                        // Verify that file-scoped namespace from the fixture is correctly included in the PathId
+                        if (node.PathId.Contains("UserController.cs"))
+                        {
+                            Assert.Contains("GithubAnalyzer.Fixtures.Controllers", node.PathId);
+                        }
                         break;
                 }
             }
@@ -224,9 +230,73 @@ public class TreeSitterAnalyzerTests
         try
         {
             var (graph, _) = await RunAnalysisAsync("CSharp", AnalysisLanguage.CSharp, [".cs"]);
-            // File→Class and Class→Function
+            
+            // Namespace->Class, File->Class, and Class->Function
             var defineEdges = graph.SourceRelEdges.Where(e => e.Type == EdgeType.Define).ToList();
             Assert.True(defineEdges.Count >= 3, $"Expected >= 3 Define edges, got {defineEdges.Count}");
+            
+            // Verify dual edge exists for directory-based view
+            var fileToClassEdge = defineEdges.FirstOrDefault(e => 
+                e.From.EndsWith("UserController.cs::") && 
+                e.To.EndsWith("UserController"));
+
+            Assert.NotNull(fileToClassEdge); // Harus ada edge dari file ke class
+        }
+        catch (DllNotFoundException)
+        {
+            Assert.True(true, "Skipped: missing native Tree-sitter binaries.");
+        }
+    }
+
+    [Fact]
+    public async Task AnalyzeAsync_Php_HasDefineEdges()
+    {
+        try
+        {
+            var (graph, _) = await RunAnalysisAsync("Php", AnalysisLanguage.Php, [".php"]);
+            
+            var defineEdges = graph.SourceRelEdges.Where(e => e.Type == EdgeType.Define).ToList();
+            Assert.True(defineEdges.Count >= 3, $"Expected >= 3 Define edges, got {defineEdges.Count}");
+            
+            // Verify dual edge exists for namespace-based and directory-based view
+            var nsToClassEdge = defineEdges.FirstOrDefault(e => 
+                e.From.EndsWith("::App.Controllers") && 
+                e.To.EndsWith("UserController"));
+                
+            var fileToClassEdge = defineEdges.FirstOrDefault(e => 
+                e.From.EndsWith("UserController.php::") && 
+                e.To.EndsWith("UserController"));
+
+            Assert.NotNull(nsToClassEdge); // Harus ada edge dari namespace ke class
+            Assert.NotNull(fileToClassEdge); // Harus ada edge dari file ke class
+        }
+        catch (DllNotFoundException)
+        {
+            Assert.True(true, "Skipped: missing native Tree-sitter binaries.");
+        }
+    }
+
+    [Fact]
+    public async Task AnalyzeAsync_Cpp_HasDefineEdges()
+    {
+        try
+        {
+            var (graph, _) = await RunAnalysisAsync("Cpp", AnalysisLanguage.Cpp, [".cpp", ".h"]);
+            
+            var defineEdges = graph.SourceRelEdges.Where(e => e.Type == EdgeType.Define).ToList();
+            Assert.True(defineEdges.Count >= 3, $"Expected >= 3 Define edges, got {defineEdges.Count}");
+            
+            // Verify dual edge exists for namespace-based and directory-based view
+            var nsToClassEdge = defineEdges.FirstOrDefault(e => 
+                e.From.EndsWith("::app") && 
+                e.To.EndsWith("UserService"));
+
+            var fileToClassEdge = defineEdges.FirstOrDefault(e => 
+                e.From.EndsWith("user.h::") && 
+                e.To.EndsWith("UserService"));
+
+            Assert.NotNull(nsToClassEdge); // Harus ada edge dari namespace ke class
+            Assert.NotNull(fileToClassEdge); // Harus ada edge dari file ke class
         }
         catch (DllNotFoundException)
         {

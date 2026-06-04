@@ -23,10 +23,15 @@ public sealed class CSharpLangQuery : BaseLangQuery
             var node = GetCaptureNode(match, "ns_name");
             if (node is null) continue;
 
+            var isFileScoped = node.Parent?.Type == "file_scoped_namespace_declaration";
+            var endLine = isFileScoped
+                ? int.MaxValue
+                : (node.Parent?.EndPosition.Row ?? node.EndPosition.Row);
+
             result.Add(new NamespaceInfo(
                 Name: node.Text,
                 StartLine: node.StartPosition.Row,
-                EndLine: node.Parent?.EndPosition.Row ?? node.EndPosition.Row
+                EndLine: endLine
             ));
         }
 

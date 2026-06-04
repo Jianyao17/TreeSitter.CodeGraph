@@ -27,10 +27,36 @@ public sealed class PhpLangQuery : BaseLangQuery
             // PHP namespace menggunakan backslash, normalisasi ke dot
             var nsName = node.Text.Replace("\\", ".");
 
+            var parent = node.Parent; // namespace_definition
+            var endLine = parent?.EndPosition.Row ?? node.EndPosition.Row;
+
+            // Deteksi file-scoped namespace di PHP (tidak ada blok kurung kurawal / declaration_list)
+            var isFileScoped = true;
+            if (parent != null)
+            {
+                foreach (var child in parent.Children)
+                {
+                    if (child.Type == "declaration_list")
+                    {
+                        isFileScoped = false;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                isFileScoped = false;
+            }
+
+            if (isFileScoped)
+            {
+                endLine = int.MaxValue;
+            }
+
             result.Add(new NamespaceInfo(
                 Name: nsName,
                 StartLine: node.StartPosition.Row,
-                EndLine: node.Parent?.EndPosition.Row ?? node.EndPosition.Row
+                EndLine: endLine
             ));
         }
 

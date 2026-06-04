@@ -26,6 +26,23 @@ public sealed class CppLangQuery : BaseLangQuery
             // C++ namespace bisa nested: ns1::ns2 → normalisasi ke ns1.ns2
             var nsName = node.Text.Replace("::", ".");
 
+            // Untuk nested namespace definitions (namespace app { namespace utils { ... } }),
+            // walk up AST untuk compose full qualified name
+            var parentNsNode = node.Parent?.Parent; // namespace_definition → parent
+            while (parentNsNode is not null)
+            {
+                if (parentNsNode.Type == "namespace_definition")
+                {
+                    var parentName = parentNsNode.GetChildForField("name");
+                    if (parentName is not null)
+                    {
+                        var parentNsName = parentName.Text.Replace("::", ".");
+                        nsName = $"{parentNsName}.{nsName}";
+                    }
+                }
+                parentNsNode = parentNsNode.Parent;
+            }
+
             result.Add(new NamespaceInfo(
                 Name: nsName,
                 StartLine: node.StartPosition.Row,
