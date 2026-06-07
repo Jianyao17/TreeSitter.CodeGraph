@@ -24,14 +24,28 @@ public sealed class CodebaseReader : ICodebaseReader
 
         var normalizedExtensions = NormalizeExtensions(options.AllowedExtensions);
         var excludedFolders = new HashSet<string>(options.ExcludedFolders, StringComparer.OrdinalIgnoreCase);
-        var snapshot = new CodebaseSnapshot { RootPath = rootPath };
 
-        foreach (var filePath in Directory.EnumerateFiles(rootPath, "*", SearchOption.AllDirectories))
+        // Github zip files extract to a single root folder (e.g. Repo-CommitHash).
+        // Detect this wrapper and step inside to get the actual repository root.
+        var actualRootPath = rootPath;
+        if (Directory.Exists(actualRootPath))
+        {
+            var subDirs = Directory.GetDirectories(actualRootPath);
+            var subFiles = Directory.GetFiles(actualRootPath);
+            if (subDirs.Length == 1 && subFiles.Length == 0)
+            {
+                actualRootPath = subDirs[0];
+            }
+        }
+
+        var snapshot = new CodebaseSnapshot { RootPath = actualRootPath };
+
+        foreach (var filePath in Directory.EnumerateFiles(actualRootPath, "*", SearchOption.AllDirectories))
         {
             cancellationToken.ThrowIfCancellationRequested();
 
             // Filter berdasarkan folder yang dikecualikan
-            if (IsInExcludedFolder(rootPath, filePath, excludedFolders))
+            if (IsInExcludedFolder(actualRootPath, filePath, excludedFolders))
                 continue;
 
             // Filter berdasarkan ekstensi file 
@@ -43,7 +57,7 @@ public sealed class CodebaseReader : ICodebaseReader
             if (options.MaxFileSizeBytes.HasValue && fileInfo.Length > options.MaxFileSizeBytes.Value)
                 continue; // Filter berdasarkan ukuran file
 
-            var relativePath = Path.GetRelativePath(rootPath, filePath);
+            var relativePath = Path.GetRelativePath(actualRootPath, filePath);
             var info = new CodebaseFileInfo
             {
                 RelativePath = relativePath,

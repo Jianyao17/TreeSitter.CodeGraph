@@ -200,26 +200,43 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
             });
 
             // Edge: parent → class (Define)
-            string classParentId;
             if (!string.IsNullOrEmpty(cls.ParentChain))
             {
                 // Nested class: parent = immediate parent container
                 var parentOfChain = GetParentOfChain(cls.ParentChain);
                 var immediateParent = GetLastSegment(cls.ParentChain);
                 var parentSymbolPath = BuildSymbolPath(cls.ParentNamespace, parentOfChain);
-                classParentId = PathId.Build(relativePath, parentSymbolPath, immediateParent);
+                var classParentId = PathId.Build(relativePath, parentSymbolPath, immediateParent);
+                
+                _graph.SourceRelEdges.Add(new GraphEdge
+                {
+                    From = classParentId,
+                    To = classPathId,
+                    Type = EdgeType.Define
+                });
             }
-            else if (usesNamespace && !string.IsNullOrEmpty(cls.ParentNamespace))
-                classParentId = PathId.ForNamespace(cls.ParentNamespace);
             else
-                classParentId = filePathId;
-
-            _graph.SourceRelEdges.Add(new GraphEdge
             {
-                From = classParentId,
-                To = classPathId,
-                Type = EdgeType.Define
-            });
+                // Top-level class
+                // 1. Edge dari Namespace (jika bahasa menggunakan namespace)
+                if (usesNamespace && !string.IsNullOrEmpty(cls.ParentNamespace))
+                {
+                    _graph.SourceRelEdges.Add(new GraphEdge
+                    {
+                        From = PathId.ForNamespace(cls.ParentNamespace),
+                        To = classPathId,
+                        Type = EdgeType.Define
+                    });
+                }
+                
+                // 2. Edge dari File (selalu dibuat agar directory-based view bekerja)
+                _graph.SourceRelEdges.Add(new GraphEdge
+                {
+                    From = filePathId,
+                    To = classPathId,
+                    Type = EdgeType.Define
+                });
+            }
 
             _declaredClasses.Add(new SymbolDeclaration(
                 cls.Name, classPathId, relativePath, cls.ParentNamespace));
@@ -240,26 +257,43 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
             });
 
             // Edge: parent → function (Define)
-            string parentId;
             if (!string.IsNullOrEmpty(func.ParentChain))
             {
                 // Function inside class/function: parent = immediate parent container
                 var parentOfChain = GetParentOfChain(func.ParentChain);
                 var immediateParent = GetLastSegment(func.ParentChain);
                 var parentSymbolPath = BuildSymbolPath(func.ParentNamespace, parentOfChain);
-                parentId = PathId.Build(relativePath, parentSymbolPath, immediateParent);
+                var parentId = PathId.Build(relativePath, parentSymbolPath, immediateParent);
+                
+                _graph.SourceRelEdges.Add(new GraphEdge
+                {
+                    From = parentId,
+                    To = funcPathId,
+                    Type = EdgeType.Define
+                });
             }
             else
             {
-                parentId = filePathId;
+                // Top-level function
+                // 1. Edge dari Namespace (jika bahasa menggunakan namespace)
+                if (usesNamespace && !string.IsNullOrEmpty(func.ParentNamespace))
+                {
+                    _graph.SourceRelEdges.Add(new GraphEdge
+                    {
+                        From = PathId.ForNamespace(func.ParentNamespace),
+                        To = funcPathId,
+                        Type = EdgeType.Define
+                    });
+                }
+                
+                // 2. Edge dari File (selalu dibuat agar directory-based view bekerja)
+                _graph.SourceRelEdges.Add(new GraphEdge
+                {
+                    From = filePathId,
+                    To = funcPathId,
+                    Type = EdgeType.Define
+                });
             }
-
-            _graph.SourceRelEdges.Add(new GraphEdge
-            {
-                From = parentId,
-                To = funcPathId,
-                Type = EdgeType.Define
-            });
 
             _declaredFunctions.Add(new SymbolDeclaration(
                 func.Name, funcPathId, relativePath, func.ParentNamespace, func.ParentChain));
@@ -374,44 +408,42 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
 
     /// <summary>
     /// Bangun namespace hierarchy nodes dan edges.
+    /// Membuat semua intermediate namespace nodes (mirip BuildDirectoryHierarchy).
+    /// Contoh: "A.B.C" → nodes: ::A, ::A.B, ::A.B.C dengan edges BelongsTo antar level.
     /// </summary>
     private void BuildNamespaceHierarchy(LangQueryResult result)
     {
         foreach (var ns in result.Namespaces)
         {
-            var nsId = PathId.ForNamespace(ns.Name);
-            if (!_createdNsNodes.Add(nsId)) continue;
-
-            _graph.Nodes.Add(new GraphNode
-            {
-                PathId = nsId,
-                Label = ns.Name,
-                Type = NodeType.Namespace
-            });
-
-            // Buat edge dari parent namespace jika nested
             var nsParts = ns.Name.Split('.');
-            if (nsParts.Length > 1)
-            {
-                var parentNs = string.Join('.', nsParts.Take(nsParts.Length - 1));
-                var parentNsId = PathId.ForNamespace(parentNs);
+            var accumulated = "";
 
-                if (_createdNsNodes.Add(parentNsId))
+            for (int i = 0; i < nsParts.Length; i++)
+            {
+                accumulated = i == 0 ? nsParts[i] : $"{accumulated}.{nsParts[i]}";
+                var currentNsId = PathId.ForNamespace(accumulated);
+
+                if (_createdNsNodes.Add(currentNsId))
                 {
                     _graph.Nodes.Add(new GraphNode
                     {
-                        PathId = parentNsId,
-                        Label = parentNs,
+                        PathId = currentNsId,
+                        Label = nsParts[i],
                         Type = NodeType.Namespace
                     });
-                }
 
-                _graph.SourceRelEdges.Add(new GraphEdge
-                {
-                    From = parentNsId,
-                    To = nsId,
-                    Type = EdgeType.BelongsTo
-                });
+                    // Edge: parent namespace → child namespace (BelongsTo)
+                    if (i > 0)
+                    {
+                        var parentAccumulated = string.Join('.', nsParts.Take(i));
+                        _graph.SourceRelEdges.Add(new GraphEdge
+                        {
+                            From = PathId.ForNamespace(parentAccumulated),
+                            To = currentNsId,
+                            Type = EdgeType.BelongsTo
+                        });
+                    }
+                }
             }
         }
     }
