@@ -45,6 +45,16 @@ public sealed record GraphNode
     /// Tipe node (Directory, Namespace, File, Class, Function)
     /// </summary>
     public NodeType Type { get; init; }
+
+    /// <summary>
+    /// Baris awal node dalam file sumber (1-indexed). Null jika tidak berlaku (misal Directory).
+    /// </summary>
+    public int? StartLine { get; init; }
+
+    /// <summary>
+    /// Baris akhir node dalam file sumber (1-indexed). Null jika tidak berlaku.
+    /// </summary>
+    public int? EndLine { get; init; }
 }
 
 /// <summary>

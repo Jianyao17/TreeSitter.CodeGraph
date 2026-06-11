@@ -196,7 +196,9 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
             {
                 PathId = classPathId,
                 Label = cls.Name,
-                Type = NodeType.Class
+                Type = NodeType.Class,
+                StartLine = cls.StartLine + 1,
+                EndLine = cls.EndLine + 1
             });
 
             // Edge: parent → class (Define)
@@ -253,7 +255,9 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
             {
                 PathId = funcPathId,
                 Label = funcLabel,
-                Type = NodeType.Function
+                Type = NodeType.Function,
+                StartLine = func.StartLine + 1,
+                EndLine = func.EndLine + 1
             });
 
             // Edge: parent → function (Define)
