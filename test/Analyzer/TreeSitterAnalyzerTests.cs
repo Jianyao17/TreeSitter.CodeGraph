@@ -1,7 +1,7 @@
 using GithubAnalyzer.Analysis.Domain.Graph;
 using GithubAnalyzer.Analysis.Domain.Reader;
 using GithubAnalyzer.Analysis.Domain.TreeSitter;
-using GithubAnalyzer.Analysis.Pipeline.Reader;
+using GithubAnalyzer.Analysis.Reader;
 using GithubAnalyzer.Analysis.TreeSitter;
 using GithubAnalyzer.Analysis.TreeSitter.Utils;
 

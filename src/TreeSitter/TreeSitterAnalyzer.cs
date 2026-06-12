@@ -57,6 +57,17 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
         // PASS 1: Declaration Mapping (0% - 60%)
         // ================================================================
 
+        var repoName = snapshot.RepositoryName;
+        if (string.IsNullOrEmpty(repoName)) 
+            repoName = Path.GetFileName(snapshot.RootPath);
+
+        _graph.Nodes.Add(new GraphNode
+        {
+            PathId = "ROOT::",
+            Label = repoName,
+            Type = NodeType.Directory
+        });
+
         yield return new TreeSitterProgress<CodeGraph>
         {
             Percentage = 0,
@@ -183,6 +194,16 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
                 From = PathId.ForDirectory(parentDir),
                 To = filePathId,
                 Type = EdgeType.BelongsTo
+            });
+        }
+        else
+        {
+            // Sambungkan file root langsung ke manual root
+            _graph.SourceRelEdges.Add(new GraphEdge
+            {
+                Type = EdgeType.BelongsTo,
+                From = "ROOT::",
+                To = filePathId
             });
         }
 
@@ -403,6 +424,16 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
                     {
                         Type = EdgeType.BelongsTo,
                         From = PathId.ForDirectory(parentAccumulated),
+                        To = dirId
+                    });
+                }
+                else
+                {
+                    // Sambungkan top-level directory ke root manual
+                    _graph.SourceRelEdges.Add(new GraphEdge
+                    {
+                        Type = EdgeType.BelongsTo,
+                        From = "ROOT::",
                         To = dirId
                     });
                 }

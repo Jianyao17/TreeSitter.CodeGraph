@@ -1,7 +1,7 @@
 using GithubAnalyzer.Analysis.Domain.Reader;
 using GithubAnalyzer.Analysis.Interface;
 
-namespace GithubAnalyzer.Analysis.Pipeline.Reader;
+namespace GithubAnalyzer.Analysis.Reader;
 
 /// <summary>
 /// Reader untuk mengambil konten codebase sesuai filter.
@@ -48,7 +48,7 @@ public sealed class CodebaseReader : ICodebaseReader
             if (IsInExcludedFolder(actualRootPath, filePath, excludedFolders))
                 continue;
 
-            // Filter berdasarkan ekstensi file 
+            // Filter berdasarkan ekstensi file
             var extension = Path.GetExtension(filePath);
             if (normalizedExtensions.Count > 0 && !normalizedExtensions.Contains(extension))
                 continue;
