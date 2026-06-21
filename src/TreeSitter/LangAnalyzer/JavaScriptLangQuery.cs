@@ -134,17 +134,39 @@ public sealed class JavaScriptLangQuery : BaseLangQuery
     protected override List<IncludeInfo> QueryIncludes(Node root, Language lang)
     {
         var result = new List<IncludeInfo>();
+        
+        // Group matches by the import path node to combine all symbols from the same import
+        var pathMap = new Dictionary<int, IncludeInfo>();
 
-        foreach (var capture in RunQueryCaptures(JavaScriptQueries.Import, root, lang))
+        foreach (var match in RunQuery(JavaScriptQueries.Import, root, lang))
         {
-            if (capture.Name != "import_path") continue;
+            var pathNode = GetCaptureNode(match, "import_path");
+            if (pathNode == null) continue;
 
-            result.Add(new IncludeInfo(
-                Path: capture.Node.Text,
-                Line: capture.Node.StartPosition.Row
-            ));
+            var symbols = match.Captures
+                .Where(c => c.Name == "imported_sym")
+                .Select(c => c.Node.Text)
+                .ToList();
+
+            var key = pathNode.StartPosition.Row;
+            if (pathMap.TryGetValue(key, out var existing))
+            {
+                if (existing.ImportedSymbols != null && symbols.Count > 0)
+                {
+                    existing.ImportedSymbols.AddRange(symbols);
+                }
+            }
+            else
+            {
+                pathMap[key] = new IncludeInfo(
+                    Path: pathNode.Text,
+                    Line: pathNode.StartPosition.Row,
+                    ImportedSymbols: symbols.Count > 0 ? symbols : null
+                );
+            }
         }
 
+        result.AddRange(pathMap.Values);
         return result;
     }
 }

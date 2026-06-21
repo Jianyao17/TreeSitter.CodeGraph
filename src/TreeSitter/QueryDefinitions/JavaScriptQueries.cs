@@ -47,6 +47,7 @@ public static class JavaScriptQueries
             (call_expression
                 function: (member_expression
                     property: (property_identifier) @call_name))
+            (arguments (identifier) @call_name)
         ]";
 
     public const string TypeReference = @"
@@ -55,5 +56,11 @@ public static class JavaScriptQueries
 
     public const string Import = @"
         (import_statement
+            (import_clause
+                [
+                    (identifier) @imported_sym
+                    (named_imports (import_specifier name: (identifier) @imported_sym))
+                ]
+            )?
             source: (string (string_fragment) @import_path))";
 }

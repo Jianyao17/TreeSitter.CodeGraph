@@ -46,8 +46,18 @@ public static class PhpQueries
         ]";
 
     public const string TypeReference = @"
-        (object_creation_expression
-            (name) @type_ref)";
+        [
+            (object_creation_expression (name) @type_ref)
+            (object_creation_expression (qualified_name) @type_ref)
+            (named_type (name) @type_ref)
+            (named_type (qualified_name) @type_ref)
+            (namespace_use_clause (name) @type_ref)
+            (namespace_use_clause (qualified_name) @type_ref)
+            (scoped_call_expression scope: (name) @type_ref)
+            (scoped_call_expression scope: (qualified_name) @type_ref)
+            (class_constant_access_expression (name) @type_ref)
+            (class_constant_access_expression (qualified_name) @type_ref)
+        ]";
 
     public const string Include = @"
         [

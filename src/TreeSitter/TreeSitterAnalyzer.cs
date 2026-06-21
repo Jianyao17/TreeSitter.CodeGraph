@@ -134,7 +134,7 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
             cancelToken.ThrowIfCancellationRequested();
 
             // Proses usage: bangun UseRelEdges berdasarkan calls dan typeRefs
-            ProcessUsages(relativePath, result, funcLookup, classLookup);
+            ProcessUsages(relativePath, result, funcLookup, classLookup, snapshot);
 
             fileIdx++;
             var pass2Progress = 60 + (int)((double)fileIdx / _fileResults.Count * 40);
@@ -323,21 +323,6 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
             _declaredFunctions.Add(new SymbolDeclaration(
                 func.Name, funcPathId, relativePath, func.ParentNamespace, func.ParentChain));
         }
-
-        // --- Include edges ---
-        foreach (var inc in result.Includes)
-        {
-            var targetFile = ResolveIncludePath(inc.Path, relativePath, snapshot);
-            if (targetFile is not null)
-            {
-                _graph.SourceRelEdges.Add(new GraphEdge
-                {
-                    From = filePathId,
-                    To = PathId.ForFile(PathId.Normalize(targetFile)),
-                    Type = EdgeType.Include
-                });
-            }
-        }
     }
 
     // ================================================================
@@ -352,7 +337,8 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
         string relativePath,
         LangQueryResult result,
         Dictionary<string, List<SymbolDeclaration>> funcLookup,
-        Dictionary<string, List<SymbolDeclaration>> classLookup)
+        Dictionary<string, List<SymbolDeclaration>> classLookup,
+        CodebaseSnapshot snapshot)
     {
         // --- Function call edges ---
         foreach (var call in result.Calls)
@@ -384,6 +370,67 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
                 To = callerPathId,         // tempat dipanggil
                 Type = EdgeType.Call
             });
+        }
+
+        // --- Include edges ---
+        foreach (var inc in result.Includes)
+        {
+            var targetFile = ResolveIncludePath(inc.Path, relativePath, snapshot);
+            if (targetFile is null) continue;
+
+            targetFile = PathId.Normalize(targetFile); // NORMALIZE FOR MATCHING
+
+            var targetPathId = PathId.ForFile(targetFile);
+            var callerPathId = FindCallerPathId(inc.Line, relativePath, result);
+
+            bool resolvedToSymbol = false;
+
+            if (inc.ImportedSymbols != null && inc.ImportedSymbols.Count > 0)
+            {
+                foreach (var sym in inc.ImportedSymbols)
+                {
+                    if (funcLookup.TryGetValue(sym, out var funcs))
+                    {
+                        var funcMatch = funcs.FirstOrDefault(f => f.FilePath == targetFile);
+                        if (funcMatch is not null)
+                        {
+                            _graph.UseRelEdges.Add(new GraphEdge
+                            {
+                                From = funcMatch.PathId,
+                                To = callerPathId,
+                                Type = EdgeType.Call
+                            });
+                            resolvedToSymbol = true;
+                            continue;
+                        }
+                    }
+
+                    if (classLookup.TryGetValue(sym, out var classes))
+                    {
+                        var classMatch = classes.FirstOrDefault(c => c.FilePath == targetFile);
+                        if (classMatch is not null)
+                        {
+                            _graph.UseRelEdges.Add(new GraphEdge
+                            {
+                                From = classMatch.PathId,
+                                To = callerPathId,
+                                Type = EdgeType.Call
+                            });
+                            resolvedToSymbol = true;
+                        }
+                    }
+                }
+            }
+
+            if (!resolvedToSymbol)
+            {
+                _graph.UseRelEdges.Add(new GraphEdge
+                {
+                    From = targetPathId,
+                    To = callerPathId,
+                    Type = EdgeType.Include
+                });
+            }
         }
     }
 
@@ -552,8 +599,26 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
         LangQueryResult callerResult,
         Dictionary<string, List<SymbolDeclaration>> lookup)
     {
-        if (!lookup.TryGetValue(name, out var candidates) || candidates.Count == 0)
+        string searchName = name;
+        string? searchNamespace = null;
+
+        if (name.Contains('\\') || name.Contains('.'))
+        {
+            var parts = name.Split(new[] { '\\', '.' }, StringSplitOptions.RemoveEmptyEntries);
+            searchName = parts.Last();
+            searchNamespace = string.Join(".", parts.Take(parts.Length - 1));
+            if (searchNamespace == string.Empty) searchNamespace = null;
+        }
+
+        if (!lookup.TryGetValue(searchName, out var candidates) || candidates.Count == 0)
             return null;
+
+        // 0. Namespace match
+        if (searchNamespace != null)
+        {
+            var exactNs = candidates.Where(c => c.Namespace == searchNamespace).ToList();
+            if (exactNs.Count == 1) return exactNs[0];
+        }
 
         // 1. Same file — cocok langsung
         var sameFile = candidates.Where(c => c.FilePath == callerFilePath).ToList();
@@ -618,27 +683,72 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
     /// <summary>
     /// Coba resolve include/import path ke file dalam snapshot.
     /// </summary>
-    private static string? ResolveIncludePath(
-        string includePath,
-        string currentFilePath,
-        CodebaseSnapshot snapshot)
+    private static string? ResolveIncludePath(string path, string currentFilePath, CodebaseSnapshot snapshot)
     {
-        var normalized = PathId.Normalize(includePath);
+        var normalized = PathId.Normalize(path);
 
-        // Coba match langsung
-        var match = snapshot.Files.FirstOrDefault(f =>
-            PathId.Normalize(f.RelativePath).EndsWith(normalized, StringComparison.OrdinalIgnoreCase));
+        // Remove leading "./" for direct suffix matching
+        var searchSuffix = normalized.StartsWith("./") ? normalized.Substring(2) : normalized;
 
-        if (match is not null)
-            return match.RelativePath;
+        if (!searchSuffix.Contains(".."))
+        {
+            var match = snapshot.Files.FirstOrDefault(f => {
+                var norm = PathId.Normalize(f.RelativePath);
+                if (norm.EndsWith(searchSuffix, StringComparison.OrdinalIgnoreCase)) return true;
+                
+                var extIndex = norm.LastIndexOf('.');
+                var slashIndex = norm.LastIndexOf('/');
+                
+                if (extIndex > slashIndex)
+                {
+                    var withoutExt = norm.Substring(0, extIndex);
+                    if (withoutExt.EndsWith(searchSuffix, StringComparison.OrdinalIgnoreCase)) return true;
+                    if (withoutExt.EndsWith(searchSuffix + "/index", StringComparison.OrdinalIgnoreCase)) return true;
+                }
+                return false;
+            });
+
+            if (match is not null)
+                return match.RelativePath;
+        }
 
         // Coba relative terhadap current file
         var currentDir = Path.GetDirectoryName(currentFilePath)?.Replace('\\', '/') ?? "";
-        var resolvedPath = Path.Combine(currentDir, normalized).Replace('\\', '/');
+        var combined = string.IsNullOrEmpty(currentDir) ? normalized : $"{currentDir}/{normalized}";
+        
+        var parts = combined.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var stack = new List<string>();
+        foreach (var part in parts)
+        {
+            if (part == ".") continue;
+            if (part == "..")
+            {
+                if (stack.Count > 0) stack.RemoveAt(stack.Count - 1);
+            }
+            else
+            {
+                stack.Add(part);
+            }
+        }
+        var resolvedPath = string.Join("/", stack);
 
         return snapshot.Files
-            .FirstOrDefault(f => PathId.Normalize(f.RelativePath)
-                .Equals(resolvedPath, StringComparison.OrdinalIgnoreCase))
+            .FirstOrDefault(f => {
+                var norm = PathId.Normalize(f.RelativePath);
+                
+                if (norm.Equals(resolvedPath, StringComparison.OrdinalIgnoreCase)) return true;
+                
+                var extIndex = norm.LastIndexOf('.');
+                var slashIndex = norm.LastIndexOf('/');
+                
+                if (extIndex > slashIndex)
+                {
+                    var withoutExt = norm.Substring(0, extIndex);
+                    if (withoutExt.Equals(resolvedPath, StringComparison.OrdinalIgnoreCase)) return true;
+                    if (withoutExt.Equals(resolvedPath + "/index", StringComparison.OrdinalIgnoreCase)) return true;
+                }
+                return false;
+            })
             ?.RelativePath;
     }
 

@@ -143,6 +143,39 @@ class OrderService
     }
 
     [Fact]
+    public void QueryTypeRefs_DetectsUseStatementAndTypeHints()
+    {
+        try
+        {
+            var code = @"<?php
+            namespace App\Controllers;
+            use App\Models\User;
+            use App\Services\Auth;
+
+            class UserController {
+                private Auth $auth;
+                
+                public function getUser(int $id): User {
+                    $handler = [LoginController::class, 'index'];
+                    return User::find($id);
+                }
+            }";
+            
+            using var query = new PhpLangQuery();
+            var result = query.ExtractAll(code);
+            
+            // Should contain User and Auth from `use`, type hints, and static calls
+            Assert.Contains(result.TypeRefs, t => t.Name == "User");
+            Assert.Contains(result.TypeRefs, t => t.Name == "Auth");
+            Assert.Contains(result.TypeRefs, t => t.Name == "LoginController");
+        }
+        catch (DllNotFoundException)
+        {
+            Assert.True(true, "Skipped: missing native Tree-sitter binaries.");
+        }
+    }
+
+    [Fact]
     public void ExtractAll_CRLF_SameCount()
     {
         try

@@ -19,7 +19,7 @@ namespace MyApp.Services
         public class User {
             public void PerformAction() { }
         }
-        
+
         private readonly List<string> _users = new();
 
         public UserService()
@@ -163,6 +163,42 @@ namespace MyApp.Services
             var result = query.ExtractAll(SampleCode);
 
             Assert.Contains(result.TypeRefs, t => t.Name == "UserService");
+        }
+        catch (DllNotFoundException)
+        {
+            Assert.True(true, "Skipped: missing native Tree-sitter binaries.");
+        }
+    }
+
+    [Fact]
+    public void QueryTypeRefs_DetectsTypeUsageWithoutNewKeyword()
+    {
+        try
+        {
+            var code = @"
+            using System;
+            using System.Collections.Generic;
+            public class Program {
+                public List<string> Items { get; set; }
+                
+                public void PrintType(Type type) {
+                    var t = typeof(Program);
+                    Math.Abs(-1);
+                    List<Program> list = new List<Program>();
+                    Dictionary<string, User> dict = new Dictionary<string, User>();
+                }
+            }";
+            
+            using var query = new CSharpLangQuery();
+            var result = query.ExtractAll(code);
+            
+            // Should contain List, Type, Program, Math, Dictionary, and User
+            Assert.Contains(result.TypeRefs, t => t.Name == "List");
+            Assert.Contains(result.TypeRefs, t => t.Name == "Type");
+            Assert.Contains(result.TypeRefs, t => t.Name == "Program");
+            Assert.Contains(result.TypeRefs, t => t.Name == "Math");
+            Assert.Contains(result.TypeRefs, t => t.Name == "Dictionary");
+            Assert.Contains(result.TypeRefs, t => t.Name == "User");
         }
         catch (DllNotFoundException)
         {

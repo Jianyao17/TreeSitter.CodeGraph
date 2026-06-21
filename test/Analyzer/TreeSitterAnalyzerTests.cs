@@ -384,7 +384,7 @@ public class TreeSitterAnalyzerTests
         {
             var (graph, _) = await RunAnalysisAsync("Cpp", AnalysisLanguage.Cpp, [".h", ".cpp"]);
             // user.cpp includes user.h, which exists in snapshot
-            var includeEdges = graph.SourceRelEdges.Where(e => e.Type == EdgeType.Include).ToList();
+            var includeEdges = graph.UseRelEdges.Where(e => e.Type == EdgeType.Include).ToList();
             Assert.NotEmpty(includeEdges);
         }
         catch (DllNotFoundException)

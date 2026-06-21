@@ -46,8 +46,16 @@ public static class CSharpQueries
         ]";
 
     public const string TypeReference = @"
-        (object_creation_expression
-            type: (identifier) @type_ref)";
+        [
+            (object_creation_expression type: (identifier) @type_ref)
+            (variable_declaration type: (identifier) @type_ref)
+            (property_declaration type: (identifier) @type_ref)
+            (parameter type: (identifier) @type_ref)
+            (generic_name (identifier) @type_ref)
+            (type_argument_list (identifier) @type_ref)
+            (typeof_expression type: (identifier) @type_ref)
+            (member_access_expression expression: (identifier) @type_ref)
+        ]";
 
     // === Parameter type extraction ===
 

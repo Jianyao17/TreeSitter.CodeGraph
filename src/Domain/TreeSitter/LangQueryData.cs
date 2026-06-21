@@ -43,4 +43,4 @@ public sealed record TypeRefInfo(string Name, int Line);
 /// <summary>
 /// Include/import/require yang ditemukan.
 /// </summary>
-public sealed record IncludeInfo(string Path, int Line);
+public sealed record IncludeInfo(string Path, int Line, List<string>? ImportedSymbols = null);

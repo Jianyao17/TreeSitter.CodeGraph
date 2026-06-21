@@ -120,6 +120,27 @@ function validateInput(input) {
     }
 
     [Fact]
+    public void QueryCalls_DetectsDelegateArgument()
+    {
+        try
+        {
+            var code = @"
+            function myCallback() { }
+            setTimeout(myCallback, 1000);
+            ";
+            using var query = new JavaScriptLangQuery();
+            var result = query.ExtractAll(code);
+
+            Assert.Contains(result.Calls, c => c.Name == "setTimeout");
+            Assert.Contains(result.Calls, c => c.Name == "myCallback");
+        }
+        catch (DllNotFoundException)
+        {
+            Assert.True(true, "Skipped: missing native Tree-sitter binaries.");
+        }
+    }
+
+    [Fact]
     public void QueryTypeRefs_DetectsNewInstantiation()
     {
         try
@@ -136,14 +157,50 @@ function validateInput(input) {
     }
 
     [Fact]
-    public void QueryIncludes_DetectsImportPath()
+    public void QueryIncludes_DetectsDefaultAndNamedImports()
     {
         try
         {
+            var code = @"
+            import connectDB from '../src/database/mongodb.js';
+            import userRoutes from './routes/user.routes.js';
+            import { auth } from 'auth-module';
+            ";
             using var query = new JavaScriptLangQuery();
-            var result = query.ExtractAll(SampleCode);
+            var result = query.ExtractAll(code);
 
-            Assert.Contains(result.Includes, i => i.Path == "./services/userService.js");
+            Assert.Contains(result.Includes, i => i.Path == "../src/database/mongodb.js");
+            Assert.Contains(result.Includes, i => i.Path == "./routes/user.routes.js");
+            Assert.Contains(result.Includes, i => i.Path == "auth-module");
+        }
+        catch (DllNotFoundException)
+        {
+            Assert.True(true, "Skipped: missing native Tree-sitter binaries.");
+        }
+    }
+
+    [Fact]
+    public void QueryIncludes_ExtractsImportedSymbols()
+    {
+        try
+        {
+            var code = @"
+            import connectDB from '../src/database/mongodb.js';
+            import { auth, register } from 'auth-module';
+            ";
+            using var query = new JavaScriptLangQuery();
+            var result = query.ExtractAll(code);
+
+            var dbImport = result.Includes.FirstOrDefault(i => i.Path == "../src/database/mongodb.js");
+            Assert.NotNull(dbImport);
+            Assert.NotNull(dbImport.ImportedSymbols);
+            Assert.Contains("connectDB", dbImport.ImportedSymbols);
+
+            var authImport = result.Includes.FirstOrDefault(i => i.Path == "auth-module");
+            Assert.NotNull(authImport);
+            Assert.NotNull(authImport.ImportedSymbols);
+            Assert.Contains("auth", authImport.ImportedSymbols);
+            Assert.Contains("register", authImport.ImportedSymbols);
         }
         catch (DllNotFoundException)
         {
