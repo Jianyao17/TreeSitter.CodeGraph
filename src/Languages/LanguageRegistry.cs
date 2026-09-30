@@ -101,26 +101,26 @@ public sealed class LanguageRegistry : ILanguageRegistry
         return
         [
             new LanguageDefinition(
-                AnalysisLanguage.CSharp,
                 "C#",
+                AnalysisLanguage.CSharp,
                 new[] { ".cs" },
                 "c-sharp"),
 
             new LanguageDefinition(
-                AnalysisLanguage.JavaScript,
                 "JavaScript",
+                AnalysisLanguage.JavaScript,
                 new[] { ".js", ".ts" },
                 "javascript"),
 
             new LanguageDefinition(
-                AnalysisLanguage.Php,
                 "PHP",
+                AnalysisLanguage.Php,
                 new[] { ".php" },
                 "php"),
 
             new LanguageDefinition(
-                AnalysisLanguage.Cpp,
                 "C++",
+                AnalysisLanguage.Cpp,
                 new[] { ".cpp", ".cxx", ".cc", ".h", ".hpp" },
                 "cpp")
         ];

@@ -6,7 +6,7 @@ namespace GithubAnalyzer.Analysis.Domain.Languages;
 /// Definisi metadata satu bahasa pemrograman yang didukung untuk analisis.
 /// </summary>
 public sealed record LanguageDefinition(
-    AnalysisLanguage Language,
     string DisplayName,
+    AnalysisLanguage Language,
     IReadOnlyList<string> FileExtensions,
     string TreeSitterLanguageId);
