@@ -1,5 +1,5 @@
 using GithubAnalyzer.Analysis.Domain.Reader;
-using GithubAnalyzer.Analysis.Interface;
+using GithubAnalyzer.Analysis.Interfaces;
 
 namespace GithubAnalyzer.Analysis.Reader;
 

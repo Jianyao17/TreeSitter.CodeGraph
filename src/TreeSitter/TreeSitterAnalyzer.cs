@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 using GithubAnalyzer.Analysis.Domain.Graph;
 using GithubAnalyzer.Analysis.Domain.Reader;
 using GithubAnalyzer.Analysis.Domain.TreeSitter;
-using GithubAnalyzer.Analysis.Interface;
+using GithubAnalyzer.Analysis.Interfaces;
 using GithubAnalyzer.Analysis.TreeSitter.LangAnalyzer;
 using GithubAnalyzer.Analysis.TreeSitter.Utils;
 

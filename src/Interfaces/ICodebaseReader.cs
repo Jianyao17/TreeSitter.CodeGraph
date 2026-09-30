@@ -1,6 +1,6 @@
 using GithubAnalyzer.Analysis.Domain.Reader;
 
-namespace GithubAnalyzer.Analysis.Interface;
+namespace GithubAnalyzer.Analysis.Interfaces;
 
 /// <summary>
 /// Kontrak untuk membaca konten codebase berdasarkan filter.

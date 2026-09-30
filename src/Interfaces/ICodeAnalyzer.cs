@@ -2,7 +2,7 @@ using GithubAnalyzer.Analysis.Domain.Graph;
 using GithubAnalyzer.Analysis.Domain.Reader;
 using GithubAnalyzer.Analysis.Domain.TreeSitter;
 
-namespace GithubAnalyzer.Analysis.Interface;
+namespace GithubAnalyzer.Analysis.Interfaces;
 
 /// <summary>
 /// Kontrak untuk analisis kode sumber menggunakan tree-sitter.

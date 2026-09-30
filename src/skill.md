@@ -81,22 +81,22 @@ public enum AnalysisLanguage
 }
 ```
 
-### Langkah 3: Update ParserPool Mapping
+### Langkah 3: Daftarkan di LanguageRegistry
 
-**File:** `TreeSitter/Utils/ParserPool.cs`
+**File:** `Languages/LanguageRegistry.cs`
 
-Tambahkan case baru di method `MapLanguageId()`:
+Tambahkan definisi bahasa baru pada method `GetDefaultDefinitions()`:
 
 ```csharp
-private static string MapLanguageId(AnalysisLanguage language) => language switch
-{
-    // ... case yang sudah ada ...
-    AnalysisLanguage.NamaBahasaBaru => "identifier-tree-sitter",  // ← tambahkan
-    _ => throw new ArgumentOutOfRangeException(...)
-};
+new LanguageDefinition(
+    AnalysisLanguage.NamaBahasaBaru,
+    "Nama Bahasa",
+    new[] { ".ext1", ".ext2" },
+    "identifier-tree-sitter")
 ```
 
 Tree-sitter identifier biasanya lowercase, contoh: `"python"`, `"ruby"`, `"go"`, `"java"`, `"rust"`.
+LanguageRegistry otomatis menangani pemetaan ekstensi file dan identifier parser Tree-Sitter.
 
 ### Langkah 4: Buat Query Definitions
 

@@ -1,11 +1,12 @@
 using TreeSitter;
 using GithubAnalyzer.Analysis.Domain.TreeSitter;
+using GithubAnalyzer.Analysis.Languages;
 
 namespace GithubAnalyzer.Analysis.TreeSitter.Utils;
 
 /// <summary>
 /// Mengelola lifecycle Language dan Parser dari tree-sitter.
-/// Mapping AnalysisLanguage → TreeSitter language identifier.
+/// Resolusi AnalysisLanguage → TreeSitter language identifier melalui LanguageRegistry.
 /// </summary>
 public sealed class ParserPool : IDisposable
 {
@@ -15,7 +16,7 @@ public sealed class ParserPool : IDisposable
 
     public ParserPool(AnalysisLanguage language)
     {
-        var langId = MapLanguageId(language);
+        var langId = LanguageRegistry.Default.GetTreeSitterLanguageId(language);
         _language = new Language(langId);
         _parser = new Parser(_language);
     }
@@ -31,20 +32,6 @@ public sealed class ParserPool : IDisposable
         return _parser.Parse(sourceCode)
             ?? throw new InvalidOperationException("Tree-sitter gagal mem-parse source code.");
     }
-
-    /// <summary>
-    /// Mapping enum ke tree-sitter language identifier string.
-    /// </summary>
-    private static string MapLanguageId(AnalysisLanguage language) => language switch
-    {
-        AnalysisLanguage.CSharp     => "c-sharp",
-        AnalysisLanguage.JavaScript => "javascript",
-        AnalysisLanguage.Php        => "php",
-        AnalysisLanguage.Cpp        => "cpp",
-        
-        _ => throw new ArgumentOutOfRangeException(nameof(language), 
-            $"Bahasa '{language}' belum didukung.")
-    };
 
     public void Dispose()
     {
