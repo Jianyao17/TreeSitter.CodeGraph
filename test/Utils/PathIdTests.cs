@@ -1,6 +1,6 @@
-using GithubAnalyzer.Analysis.TreeSitter.Utils;
+using TreeSitter.CodeGraph.TreeSitter.Utils;
 
-namespace GithubAnalyzer.Analysis.Tests.Utils;
+namespace TreeSitter.CodeGraph.Tests.Utils;
 
 /// <summary>
 /// Menguji PathId static methods: Build, ForDirectory, ForNamespace, ForFile,
@@ -125,3 +125,4 @@ public class PathIdTests
         Assert.Equal("CSharp/Services/UserService.cs::GithubAnalyzer.Fixtures.Services.UserService.FindById(int)", funcPathId);
     }
 }
+

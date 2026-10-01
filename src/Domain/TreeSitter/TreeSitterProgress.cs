@@ -1,4 +1,4 @@
-namespace GithubAnalyzer.Analysis.Domain.TreeSitter;
+namespace TreeSitter.CodeGraph.Domain.TreeSitter;
 
 /// <summary>
 /// Model progress untuk streaming hasil analisis via IAsyncEnumerable.
@@ -26,3 +26,4 @@ public sealed class TreeSitterProgress<T> where T : class
     /// </summary>
     public T? Result { get; init; }
 }
+

@@ -1,4 +1,4 @@
-namespace GithubAnalyzer.Analysis.TreeSitter.Utils;
+namespace TreeSitter.CodeGraph.TreeSitter.Utils;
 
 /// <summary>
 /// Utility untuk membangun PathId sesuai format konvensi project.
@@ -71,3 +71,4 @@ public static class PathId
         return path.Replace('\\', '/');
     }
 }
+

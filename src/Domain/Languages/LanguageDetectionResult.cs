@@ -1,6 +1,6 @@
-using GithubAnalyzer.Analysis.Domain.TreeSitter;
+using TreeSitter.CodeGraph.Domain.TreeSitter;
 
-namespace GithubAnalyzer.Analysis.Domain.Languages;
+namespace TreeSitter.CodeGraph.Domain.Languages;
 
 /// <summary>
 /// Hasil analisis deteksi bahasa pada codebase.
@@ -34,3 +34,4 @@ public sealed record LanguageDetectionResult
     /// </summary>
     public bool HasMatch => PrimaryLanguage.HasValue && TotalMatchedFiles > 0;
 }
+

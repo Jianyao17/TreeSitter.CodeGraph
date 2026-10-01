@@ -1,8 +1,8 @@
 using TreeSitter;
-using GithubAnalyzer.Analysis.Domain.TreeSitter;
-using GithubAnalyzer.Analysis.Languages;
+using TreeSitter.CodeGraph.Domain.TreeSitter;
+using TreeSitter.CodeGraph.Languages;
 
-namespace GithubAnalyzer.Analysis.TreeSitter.Utils;
+namespace TreeSitter.CodeGraph.TreeSitter.Utils;
 
 /// <summary>
 /// Mengelola lifecycle Language dan Parser dari tree-sitter.
@@ -41,3 +41,4 @@ public sealed class ParserPool : IDisposable
         _language.Dispose();
     }
 }
+

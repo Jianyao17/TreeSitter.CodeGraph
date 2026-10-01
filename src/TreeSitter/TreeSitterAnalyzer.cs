@@ -1,12 +1,12 @@
 using System.Runtime.CompilerServices;
-using GithubAnalyzer.Analysis.Domain.Graph;
-using GithubAnalyzer.Analysis.Domain.Reader;
-using GithubAnalyzer.Analysis.Domain.TreeSitter;
-using GithubAnalyzer.Analysis.Interfaces;
-using GithubAnalyzer.Analysis.TreeSitter.LangAnalyzer;
-using GithubAnalyzer.Analysis.TreeSitter.Utils;
+using TreeSitter.CodeGraph.Domain.Graph;
+using TreeSitter.CodeGraph.Domain.Reader;
+using TreeSitter.CodeGraph.Domain.TreeSitter;
+using TreeSitter.CodeGraph.Interfaces;
+using TreeSitter.CodeGraph.TreeSitter.LangAnalyzer;
+using TreeSitter.CodeGraph.TreeSitter.Utils;
 
-namespace GithubAnalyzer.Analysis.TreeSitter;
+namespace TreeSitter.CodeGraph.TreeSitter;
 
 /// <summary>
 /// Analyzer utama yang mengimplementasi ICodeAnalyzer.
@@ -20,14 +20,14 @@ namespace GithubAnalyzer.Analysis.TreeSitter;
 public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
 {
     // === Class-level analysis state ===
-    private CodeGraph _graph = new();                                            // Output graf akhir
+    private Domain.Graph.CodeGraph _graph = new();                                            // Output graf akhir
     private readonly List<SymbolDeclaration> _declaredFunctions = [];            // Deklarasi fungsi dari Pass 1, untuk lookup di Pass 2
     private readonly List<SymbolDeclaration> _declaredClasses = [];              // Deklarasi class dari Pass 1, untuk lookup di Pass 2
     private readonly Dictionary<string, LangQueryResult> _fileResults = new();   // Cache hasil query per file, reuse di Pass 2
     private readonly HashSet<string> _createdDirNodes = new();                   // Tracking directory nodes yang sudah dibuat (anti-duplikat)
     private readonly HashSet<string> _createdNsNodes = new();                    // Tracking namespace nodes yang sudah dibuat (anti-duplikat)
 
-    public async IAsyncEnumerable<TreeSitterProgress<CodeGraph>> AnalyzeAsync(
+    public async IAsyncEnumerable<TreeSitterProgress<Domain.Graph.CodeGraph>> AnalyzeAsync(
         CodebaseSnapshot snapshot,
         AnalysisLanguage language,
         [EnumeratorCancellation]
@@ -43,7 +43,7 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
 
         if (totalFiles == 0)
         {
-            yield return new TreeSitterProgress<CodeGraph>
+            yield return new TreeSitterProgress<Domain.Graph.CodeGraph>
             {
                 Percentage = 100,
                 Message = "Tidak ada file untuk dianalisis.",
@@ -68,7 +68,7 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
             Type = NodeType.Directory
         });
 
-        yield return new TreeSitterProgress<CodeGraph>
+        yield return new TreeSitterProgress<Domain.Graph.CodeGraph>
         {
             Percentage = 0,
             Message = "Memulai Pass 1: Declaration Mapping..."
@@ -100,7 +100,7 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
 
             // Progress Pass 1: 0-60%
             var pass1Progress = (int)((i + 1.0) / totalFiles * 60);
-            yield return new TreeSitterProgress<CodeGraph>
+            yield return new TreeSitterProgress<Domain.Graph.CodeGraph>
             {
                 Percentage = pass1Progress,
                 Message = $"Pass 1: {i + 1}/{totalFiles} file diproses — {Path.GetFileName(relativePath)}"
@@ -113,7 +113,7 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
         // PASS 2: Usage Scanning (60% - 100%)
         // ================================================================
 
-        yield return new TreeSitterProgress<CodeGraph>
+        yield return new TreeSitterProgress<Domain.Graph.CodeGraph>
         {
             Percentage = 60,
             Message = "Memulai Pass 2: Usage Scanning..."
@@ -138,7 +138,7 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
 
             fileIdx++;
             var pass2Progress = 60 + (int)((double)fileIdx / _fileResults.Count * 40);
-            yield return new TreeSitterProgress<CodeGraph>
+            yield return new TreeSitterProgress<Domain.Graph.CodeGraph>
             {
                 Percentage = pass2Progress,
                 Message = $"Pass 2: {fileIdx}/{_fileResults.Count} file di-scan — {Path.GetFileName(relativePath)}"
@@ -148,7 +148,7 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
         }
 
         // === Final yield ===
-        yield return new TreeSitterProgress<CodeGraph>
+        yield return new TreeSitterProgress<Domain.Graph.CodeGraph>
         {
             Percentage = 100,
             Message = $"Analisis selesai. {_graph.Nodes.Count} nodes, "
@@ -539,7 +539,7 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
     /// </summary>
     private void ResetState()
     {
-        _graph = new CodeGraph();
+        _graph = new();
         _declaredFunctions.Clear();
         _declaredClasses.Clear();
         _fileResults.Clear();
@@ -786,3 +786,6 @@ public sealed class TreeSitterAnalyzer : ICodeAnalyzer, IDisposable
         // Resources (BaseLangQuery) dibuang via using di AnalyzeAsync
     }
 }
+
+
+

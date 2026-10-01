@@ -1,4 +1,4 @@
-namespace GithubAnalyzer.Analysis.Domain.TreeSitter;
+namespace TreeSitter.CodeGraph.Domain.TreeSitter;
 
 /// <summary>
 /// Bahasa pemrograman yang didukung untuk analisis kode.
@@ -10,3 +10,4 @@ public enum AnalysisLanguage
     Php,
     Cpp
 }
+

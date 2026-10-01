@@ -1,9 +1,9 @@
-using GithubAnalyzer.Analysis.Domain.Reader;
-using GithubAnalyzer.Analysis.Domain.TreeSitter;
-using GithubAnalyzer.Analysis.Reader;
-using GithubAnalyzer.Analysis.TreeSitter.Utils;
+using TreeSitter.CodeGraph.Domain.Reader;
+using TreeSitter.CodeGraph.Domain.TreeSitter;
+using TreeSitter.CodeGraph.Reader;
+using TreeSitter.CodeGraph.TreeSitter.Utils;
 
-namespace GithubAnalyzer.Analysis.Tests.Reader;
+namespace TreeSitter.CodeGraph.Tests.Reader;
 
 /// <summary>
 /// Menguji berbagai format konten teks agar dapat dibaca dan di-parse Tree-Sitter.
@@ -88,7 +88,7 @@ public class ContentFormatTests
             var codeCRLF = codeLF.Replace("\n", "\r\n");
 
             using var pool = new ParserPool(AnalysisLanguage.CSharp);
-            using var langQuery = new GithubAnalyzer.Analysis.TreeSitter.LangAnalyzer.CSharpLangQuery();
+            using var langQuery = new TreeSitter.LangAnalyzer.CSharpLangQuery();
 
             var resultLF = langQuery.ExtractAll(codeLF);
             var resultCRLF = langQuery.ExtractAll(codeCRLF);
@@ -259,3 +259,5 @@ public class ContentFormatTests
         }
     }
 }
+
+

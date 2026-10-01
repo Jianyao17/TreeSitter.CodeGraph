@@ -1,4 +1,4 @@
-namespace GithubAnalyzer.Analysis.Domain.Graph;
+namespace TreeSitter.CodeGraph.Domain.Graph;
 
 /// <summary>
 /// Representasi edge (relasi) antar node dalam graf kode.

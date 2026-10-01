@@ -1,11 +1,11 @@
-using GithubAnalyzer.Analysis.Domain.Graph;
-using GithubAnalyzer.Analysis.Domain.Reader;
-using GithubAnalyzer.Analysis.Domain.TreeSitter;
-using GithubAnalyzer.Analysis.Reader;
-using GithubAnalyzer.Analysis.TreeSitter;
-using GithubAnalyzer.Analysis.TreeSitter.Utils;
+using TreeSitter.CodeGraph.Domain.Graph;
+using TreeSitter.CodeGraph.Domain.Reader;
+using TreeSitter.CodeGraph.Domain.TreeSitter;
+using TreeSitter.CodeGraph.Reader;
+using TreeSitter.CodeGraph.TreeSitter;
+using TreeSitter.CodeGraph.TreeSitter.Utils;
 
-namespace GithubAnalyzer.Analysis.Tests.Analyzer;
+namespace TreeSitter.CodeGraph.Tests.Analyzer;
 
 /// <summary>
 /// Pengujian integrasi namespace hierarchy pada CodeGraph.
@@ -17,7 +17,7 @@ public class NamespaceHierarchyTests
 {
     private readonly string _fixturesPath = Path.Combine(AppContext.BaseDirectory, "Fixtures");
 
-    private async Task<CodeGraph> RunAnalysisAsync(
+    private async Task<Domain.Graph.CodeGraph> RunAnalysisAsync(
         string subFolder, AnalysisLanguage language, string[] extensions)
     {
         var reader = new CodebaseReader();
@@ -25,7 +25,7 @@ public class NamespaceHierarchyTests
         var snapshot = await reader.ReadAsync(Path.Combine(_fixturesPath, subFolder), options);
 
         using var analyzer = new TreeSitterAnalyzer();
-        CodeGraph? graph = null;
+        Domain.Graph.CodeGraph? graph = null;
 
         await foreach (var p in analyzer.AnalyzeAsync(snapshot, language))
         {
@@ -448,3 +448,7 @@ public class NamespaceHierarchyTests
         }
     }
 }
+
+
+
+

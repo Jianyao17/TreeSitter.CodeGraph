@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>GithubAnalyzer.Analysis.Tests</RootNamespace>
+    <RootNamespace>TreeSitter.CodeGraph.Tests</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
@@ -20,7 +20,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\Github-Analyzer.Analysis\Github-Analyzer.Analysis.csproj" />
+    <ProjectReference Include="..\src\TreeSitter.CodeGraph.csproj" />
   </ItemGroup>
 
   <!-- Exclude fixture .cs files from compilation -->

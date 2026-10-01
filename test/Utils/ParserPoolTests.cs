@@ -1,7 +1,7 @@
-using GithubAnalyzer.Analysis.Domain.TreeSitter;
-using GithubAnalyzer.Analysis.TreeSitter.Utils;
+using TreeSitter.CodeGraph.Domain.TreeSitter;
+using TreeSitter.CodeGraph.TreeSitter.Utils;
 
-namespace GithubAnalyzer.Analysis.Tests.Utils;
+namespace TreeSitter.CodeGraph.Tests.Utils;
 
 /// <summary>
 /// Menguji ParserPool: instantiasi untuk semua bahasa, parse valid/invalid,
@@ -266,3 +266,4 @@ public class ParserPoolTests
         }
     }
 }
+

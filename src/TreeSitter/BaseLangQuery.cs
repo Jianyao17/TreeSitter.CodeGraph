@@ -1,8 +1,8 @@
 using TreeSitter;
-using GithubAnalyzer.Analysis.Domain.TreeSitter;
-using GithubAnalyzer.Analysis.TreeSitter.Utils;
+using TreeSitter.CodeGraph.Domain.TreeSitter;
+using TreeSitter.CodeGraph.TreeSitter.Utils;
 
-namespace GithubAnalyzer.Analysis.TreeSitter;
+namespace TreeSitter.CodeGraph.TreeSitter;
 
 /// <summary>
 /// Abstract base class untuk query node tree-sitter per bahasa.
@@ -232,3 +232,4 @@ public abstract class BaseLangQuery : IDisposable
         GC.SuppressFinalize(this);
     }
 }
+

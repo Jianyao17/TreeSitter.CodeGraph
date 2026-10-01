@@ -1,6 +1,6 @@
-using GithubAnalyzer.Analysis.Domain.TreeSitter;
+using TreeSitter.CodeGraph.Domain.TreeSitter;
 
-namespace GithubAnalyzer.Analysis.Domain.Languages;
+namespace TreeSitter.CodeGraph.Domain.Languages;
 
 /// <summary>
 /// Definisi metadata satu bahasa pemrograman yang didukung untuk analisis.
@@ -10,3 +10,4 @@ public sealed record LanguageDefinition(
     AnalysisLanguage Language,
     IReadOnlyList<string> FileExtensions,
     string TreeSitterLanguageId);
+

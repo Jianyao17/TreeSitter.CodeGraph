@@ -1,6 +1,6 @@
-using GithubAnalyzer.Analysis.Domain.Reader;
+using TreeSitter.CodeGraph.Domain.Reader;
 
-namespace GithubAnalyzer.Analysis.Interfaces;
+namespace TreeSitter.CodeGraph.Interfaces;
 
 /// <summary>
 /// Kontrak untuk membaca konten codebase berdasarkan filter.
@@ -15,3 +15,4 @@ public interface ICodebaseReader
         CodebaseReadOptions options,
         CancellationToken cancellationToken = default);
 }
+

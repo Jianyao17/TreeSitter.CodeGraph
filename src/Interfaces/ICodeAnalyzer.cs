@@ -1,8 +1,8 @@
-using GithubAnalyzer.Analysis.Domain.Graph;
-using GithubAnalyzer.Analysis.Domain.Reader;
-using GithubAnalyzer.Analysis.Domain.TreeSitter;
+using TreeSitter.CodeGraph.Domain.Graph;
+using TreeSitter.CodeGraph.Domain.Reader;
+using TreeSitter.CodeGraph.Domain.TreeSitter;
 
-namespace GithubAnalyzer.Analysis.Interfaces;
+namespace TreeSitter.CodeGraph.Interfaces;
 
 /// <summary>
 /// Kontrak untuk analisis kode sumber menggunakan tree-sitter.
@@ -14,8 +14,10 @@ public interface ICodeAnalyzer
     /// Menjalankan analisis dua-fase (Declaration Mapping + Usage Scanning)
     /// pada snapshot codebase dan menghasilkan CodeGraph.
     /// </summary>
-    IAsyncEnumerable<TreeSitterProgress<CodeGraph>> AnalyzeAsync(
+    IAsyncEnumerable<TreeSitterProgress<Domain.Graph.CodeGraph>> AnalyzeAsync(
         CodebaseSnapshot snapshot,
         AnalysisLanguage language,
         CancellationToken cancellationToken = default);
 }
+
+

@@ -1,4 +1,4 @@
-namespace GithubAnalyzer.Analysis.Domain.Reader;
+namespace TreeSitter.CodeGraph.Domain.Reader;
 
 /// <summary>
 /// Konten file yang sudah dibaca dari codebase.
@@ -30,3 +30,4 @@ public record CodebaseFileContent
     /// </summary>
     public string Content { get; init; } = string.Empty;
 }
+

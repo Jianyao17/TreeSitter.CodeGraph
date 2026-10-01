@@ -1,6 +1,6 @@
-using GithubAnalyzer.Analysis.Domain.Languages;
+using TreeSitter.CodeGraph.Domain.Languages;
 
-namespace GithubAnalyzer.Analysis.Interfaces;
+namespace TreeSitter.CodeGraph.Interfaces;
 
 /// <summary>
 /// Kontrak untuk mendeteksi bahasa pemrograman dominan dalam codebase.
@@ -25,3 +25,4 @@ public interface ILanguageDetector
     /// </summary>
     LanguageDetectionResult DetectFromFiles(IEnumerable<string> filePaths, LanguageDetectionOptions? options = null);
 }
+

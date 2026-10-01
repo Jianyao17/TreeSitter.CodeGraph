@@ -1,6 +1,6 @@
-using GithubAnalyzer.Analysis.Domain.TreeSitter;
+using TreeSitter.CodeGraph.Domain.TreeSitter;
 
-namespace GithubAnalyzer.Analysis.Domain.Languages;
+namespace TreeSitter.CodeGraph.Domain.Languages;
 
 /// <summary>
 /// Opsi konfigurasi untuk proses deteksi bahasa.
@@ -19,3 +19,4 @@ public sealed class LanguageDetectionOptions
     /// </summary>
     public AnalysisLanguage? DefaultFallback { get; init; } = AnalysisLanguage.CSharp;
 }
+

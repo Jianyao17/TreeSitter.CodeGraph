@@ -1,4 +1,4 @@
-namespace GithubAnalyzer.Analysis.Domain.Reader;
+namespace TreeSitter.CodeGraph.Domain.Reader;
 
 /// <summary>
 /// Metadata file untuk proses filtering.
@@ -25,3 +25,4 @@ public record CodebaseFileInfo
     /// </summary>
     public long SizeBytes { get; init; }
 }
+

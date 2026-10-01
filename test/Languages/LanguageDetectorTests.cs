@@ -1,8 +1,8 @@
-using GithubAnalyzer.Analysis.Domain.Languages;
-using GithubAnalyzer.Analysis.Domain.TreeSitter;
-using GithubAnalyzer.Analysis.Languages;
+using TreeSitter.CodeGraph.Domain.Languages;
+using TreeSitter.CodeGraph.Domain.TreeSitter;
+using TreeSitter.CodeGraph.Languages;
 
-namespace GithubAnalyzer.Analysis.Tests.Languages;
+namespace TreeSitter.CodeGraph.Tests.Languages;
 
 public class LanguageDetectorTests
 {
@@ -139,3 +139,4 @@ public class LanguageDetectorTests
         Assert.Equal(syncResult.TotalMatchedFiles, asyncResult.TotalMatchedFiles);
     }
 }
+

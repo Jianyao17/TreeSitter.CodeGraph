@@ -1,4 +1,4 @@
-namespace GithubAnalyzer.Analysis.Domain.Graph;
+namespace TreeSitter.CodeGraph.Domain.Graph;
 
 public sealed class CodeGraph
 {
@@ -13,3 +13,4 @@ public sealed class CodeGraph
     // EdgeType bisa berupa: Call
     public List<GraphEdge> UseRelEdges { get; init; } = new();
 }
+

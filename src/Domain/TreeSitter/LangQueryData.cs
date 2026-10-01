@@ -1,4 +1,4 @@
-namespace GithubAnalyzer.Analysis.Domain.TreeSitter;
+namespace TreeSitter.CodeGraph.Domain.TreeSitter;
 
 /// <summary>
 /// Hasil query per file dari BaseLangQuery — format standar lintas bahasa.
@@ -44,3 +44,4 @@ public sealed record TypeRefInfo(string Name, int Line);
 /// Include/import/require yang ditemukan.
 /// </summary>
 public sealed record IncludeInfo(string Path, int Line, List<string>? ImportedSymbols = null);
+

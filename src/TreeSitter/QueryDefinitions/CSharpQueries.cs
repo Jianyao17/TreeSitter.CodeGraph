@@ -1,4 +1,4 @@
-namespace GithubAnalyzer.Analysis.TreeSitter.QueryDefinitions;
+namespace TreeSitter.CodeGraph.TreeSitter.QueryDefinitions;
 
 /// <summary>
 /// Tree-sitter S-expression queries untuk grammar C#.
@@ -63,3 +63,4 @@ public static class CSharpQueries
         (parameter
             type: (_) @param_type)";
 }
+

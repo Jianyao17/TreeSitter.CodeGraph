@@ -1,8 +1,8 @@
-using GithubAnalyzer.Analysis.Domain.Languages;
-using GithubAnalyzer.Analysis.Domain.TreeSitter;
-using GithubAnalyzer.Analysis.Interfaces;
+using TreeSitter.CodeGraph.Domain.Languages;
+using TreeSitter.CodeGraph.Domain.TreeSitter;
+using TreeSitter.CodeGraph.Interfaces;
 
-namespace GithubAnalyzer.Analysis.Languages;
+namespace TreeSitter.CodeGraph.Languages;
 
 /// <summary>
 /// Registry terpusat untuk katalog bahasa pemrograman yang didukung oleh analyzer.
@@ -126,3 +126,4 @@ public sealed class LanguageRegistry : ILanguageRegistry
         ];
     }
 }
+

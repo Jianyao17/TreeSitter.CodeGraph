@@ -1,7 +1,7 @@
-using GithubAnalyzer.Analysis.Domain.Languages;
-using GithubAnalyzer.Analysis.Domain.TreeSitter;
+using TreeSitter.CodeGraph.Domain.Languages;
+using TreeSitter.CodeGraph.Domain.TreeSitter;
 
-namespace GithubAnalyzer.Analysis.Interfaces;
+namespace TreeSitter.CodeGraph.Interfaces;
 
 /// <summary>
 /// Kontrak untuk katalog bahasa pemrograman yang didukung oleh analyzer.
@@ -33,3 +33,4 @@ public interface ILanguageRegistry
     /// </summary>
     string GetTreeSitterLanguageId(AnalysisLanguage language);
 }
+

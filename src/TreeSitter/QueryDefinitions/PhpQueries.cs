@@ -1,4 +1,4 @@
-namespace GithubAnalyzer.Analysis.TreeSitter.QueryDefinitions;
+namespace TreeSitter.CodeGraph.TreeSitter.QueryDefinitions;
 
 /// <summary>
 /// Tree-sitter S-expression queries untuk grammar PHP.
@@ -73,3 +73,4 @@ public static class PhpQueries
         (simple_parameter
             type: (_) @param_type)";
 }
+

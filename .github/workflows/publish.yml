@@ -1,0 +1,42 @@
+name: Build, Test & Publish
+
+on:
+  push:
+    branches: [ main ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore TreeSitter.CodeGraph.sln
+
+      - name: Build
+        run: dotnet build TreeSitter.CodeGraph.sln -c Release --no-restore
+
+      - name: Test
+        run: dotnet test TreeSitter.CodeGraph.sln -c Release --no-build --verbosity normal
+
+      - name: Pack NuGet Package
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: dotnet pack src/TreeSitter.CodeGraph.csproj -c Release -o ./nupkg
+
+      - name: Publish to NuGet.org
+        if: startsWith(github.ref, 'refs/tags/v') && env.NUGET_AUTH_TOKEN != ''
+        env:
+          NUGET_AUTH_TOKEN: ${{ secrets.NUGET_API_KEY }}
+        run: dotnet nuget push ./nupkg/*.nupkg --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json --skip-duplicate

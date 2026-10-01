@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <RootNamespace>TreeSitter.CodeGraph</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <!-- NuGet Package Metadata -->
+    <PackageId>TreeSitter.CodeGraph</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>Jianyao</Authors>
+    <Description>Tree-Sitter based static code graph analyzer and multi-language codebase scanner for .NET.</Description>
+    <PackageTags>tree-sitter;code-analysis;code-graph;ast;static-analysis</PackageTags>
+    <RepositoryUrl>https://github.com/Jianyao17/TreeSitter.CodeGraph</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TreeSitter.DotNet" Version="1.3.0" />
+  </ItemGroup>
+
+</Project>

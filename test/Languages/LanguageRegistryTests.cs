@@ -1,7 +1,7 @@
-using GithubAnalyzer.Analysis.Domain.TreeSitter;
-using GithubAnalyzer.Analysis.Languages;
+using TreeSitter.CodeGraph.Domain.TreeSitter;
+using TreeSitter.CodeGraph.Languages;
 
-namespace GithubAnalyzer.Analysis.Tests.Languages;
+namespace TreeSitter.CodeGraph.Tests.Languages;
 
 public class LanguageRegistryTests
 {
@@ -76,3 +76,4 @@ public class LanguageRegistryTests
         Assert.Contains(".cs", AnalysisLanguage.CSharp.GetSupportedExtensions());
     }
 }
+

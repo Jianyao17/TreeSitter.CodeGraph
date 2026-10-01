@@ -1,6 +1,6 @@
-using GithubAnalyzer.Analysis.TreeSitter.LangAnalyzer;
+using TreeSitter.CodeGraph.TreeSitter.LangAnalyzer;
 
-namespace GithubAnalyzer.Analysis.Tests.LangQuery;
+namespace TreeSitter.CodeGraph.Tests.LangQuery;
 
 /// <summary>
 /// Menguji ekstraksi deklarasi dan usage dari kode C#.
@@ -314,3 +314,4 @@ namespace MyApp
         }
     }
 }
+

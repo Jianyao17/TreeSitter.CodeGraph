@@ -1,4 +1,4 @@
-namespace GithubAnalyzer.Analysis.Domain.Reader;
+namespace TreeSitter.CodeGraph.Domain.Reader;
 
 /// <summary>
 /// Opsi filter untuk pembacaan codebase.
@@ -27,3 +27,4 @@ public sealed class CodebaseReadOptions
     /// </summary>
     public Func<CodebaseFileInfo, bool>? CustomFilter { get; init; }
 }
+

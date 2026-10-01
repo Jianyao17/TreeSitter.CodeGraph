@@ -1,9 +1,9 @@
-using GithubAnalyzer.Analysis.Domain.Reader;
-using GithubAnalyzer.Analysis.Domain.TreeSitter;
-using GithubAnalyzer.Analysis.Reader;
-using GithubAnalyzer.Analysis.TreeSitter.Utils;
+using TreeSitter.CodeGraph.Domain.Reader;
+using TreeSitter.CodeGraph.Domain.TreeSitter;
+using TreeSitter.CodeGraph.Reader;
+using TreeSitter.CodeGraph.TreeSitter.Utils;
 
-namespace GithubAnalyzer.Analysis.Tests.Reader;
+namespace TreeSitter.CodeGraph.Tests.Reader;
 
 /// <summary>
 /// Menguji CodebaseReader: filter ekstensi, folder, ukuran, custom filter,
@@ -174,3 +174,4 @@ public class CodebaseReaderTests
             () => _reader.ReadAsync(_fixturesPath, null!));
     }
 }
+

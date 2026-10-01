@@ -1,11 +1,11 @@
-using GithubAnalyzer.Analysis.Domain.Graph;
-using GithubAnalyzer.Analysis.Domain.Reader;
-using GithubAnalyzer.Analysis.Domain.TreeSitter;
-using GithubAnalyzer.Analysis.Reader;
-using GithubAnalyzer.Analysis.TreeSitter;
-using GithubAnalyzer.Analysis.TreeSitter.Utils;
+using TreeSitter.CodeGraph.Domain.Graph;
+using TreeSitter.CodeGraph.Domain.Reader;
+using TreeSitter.CodeGraph.Domain.TreeSitter;
+using TreeSitter.CodeGraph.Reader;
+using TreeSitter.CodeGraph.TreeSitter;
+using TreeSitter.CodeGraph.TreeSitter.Utils;
 
-namespace GithubAnalyzer.Analysis.Tests.Analyzer;
+namespace TreeSitter.CodeGraph.Tests.Analyzer;
 
 /// <summary>
 /// Pengujian integrasi TreeSitterAnalyzer menggunakan fixture codebase nyata.
@@ -16,7 +16,7 @@ public class TreeSitterAnalyzerTests
 {
     private readonly string _fixturesPath = Path.Combine(AppContext.BaseDirectory, "Fixtures");
 
-    private async Task<(CodeGraph Graph, List<TreeSitterProgress<CodeGraph>> AllProgress)> RunAnalysisAsync(
+    private async Task<(Domain.Graph.CodeGraph Graph, List<TreeSitterProgress<Domain.Graph.CodeGraph>> AllProgress)> RunAnalysisAsync(
         string subFolder, AnalysisLanguage language, string[] extensions, CancellationToken ct = default)
     {
         var reader = new CodebaseReader();
@@ -24,8 +24,8 @@ public class TreeSitterAnalyzerTests
         var snapshot = await reader.ReadAsync(Path.Combine(_fixturesPath, subFolder), options, ct);
 
         using var analyzer = new TreeSitterAnalyzer();
-        var progressList = new List<TreeSitterProgress<CodeGraph>>();
-        CodeGraph? graph = null;
+        var progressList = new List<TreeSitterProgress<Domain.Graph.CodeGraph>>();
+        Domain.Graph.CodeGraph? graph = null;
 
         await foreach (var p in analyzer.AnalyzeAsync(snapshot, language, ct))
         {
@@ -93,7 +93,7 @@ public class TreeSitterAnalyzerTests
         {
             var snapshot = new CodebaseSnapshot { RootPath = _fixturesPath };
             using var analyzer = new TreeSitterAnalyzer();
-            var progressList = new List<TreeSitterProgress<CodeGraph>>();
+            var progressList = new List<TreeSitterProgress<Domain.Graph.CodeGraph>>();
 
             await foreach (var p in analyzer.AnalyzeAsync(snapshot, AnalysisLanguage.CSharp))
                 progressList.Add(p);
@@ -393,3 +393,7 @@ public class TreeSitterAnalyzerTests
         }
     }
 }
+
+
+
+

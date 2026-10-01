@@ -1,4 +1,4 @@
-namespace GithubAnalyzer.Analysis.TreeSitter.QueryDefinitions;
+namespace TreeSitter.CodeGraph.TreeSitter.QueryDefinitions;
 
 /// <summary>
 /// Tree-sitter S-expression queries untuk grammar C++.
@@ -62,3 +62,4 @@ public static class CppQueries
         (parameter_declaration
             type: (_) @param_type)";
 }
+

@@ -1,7 +1,7 @@
-using GithubAnalyzer.Analysis.Domain.Reader;
-using GithubAnalyzer.Analysis.Interfaces;
+using TreeSitter.CodeGraph.Domain.Reader;
+using TreeSitter.CodeGraph.Interfaces;
 
-namespace GithubAnalyzer.Analysis.Reader;
+namespace TreeSitter.CodeGraph.Reader;
 
 /// <summary>
 /// Reader untuk mengambil konten codebase sesuai filter.
@@ -128,3 +128,4 @@ public sealed class CodebaseReader : ICodebaseReader
         return false;
     }
 }
+

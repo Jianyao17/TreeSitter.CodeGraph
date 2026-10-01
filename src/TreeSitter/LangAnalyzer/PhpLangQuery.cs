@@ -1,8 +1,8 @@
 using TreeSitter;
-using GithubAnalyzer.Analysis.Domain.TreeSitter;
-using GithubAnalyzer.Analysis.TreeSitter.QueryDefinitions;
+using TreeSitter.CodeGraph.Domain.TreeSitter;
+using TreeSitter.CodeGraph.TreeSitter.QueryDefinitions;
 
-namespace GithubAnalyzer.Analysis.TreeSitter.LangAnalyzer;
+namespace TreeSitter.CodeGraph.TreeSitter.LangAnalyzer;
 
 /// <summary>
 /// Implementasi query tree-sitter untuk bahasa PHP.
@@ -186,3 +186,4 @@ public sealed class PhpLangQuery : BaseLangQuery
         return result;
     }
 }
+
