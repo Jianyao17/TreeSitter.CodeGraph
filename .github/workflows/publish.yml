@@ -27,13 +27,13 @@ jobs:
             10.0.x
 
       - name: Restore dependencies
-        run: dotnet restore TreeSitter.CodeGraph.sln
+        run: dotnet restore TreeSitter.CodeGraph.slnx
 
       - name: Build Solution
-        run: dotnet build TreeSitter.CodeGraph.sln -c Release --no-restore
+        run: dotnet build TreeSitter.CodeGraph.slnx -c Release --no-restore
 
       - name: Run Tests
-        run: dotnet test TreeSitter.CodeGraph.sln -c Release --no-build --verbosity normal
+        run: dotnet test TreeSitter.CodeGraph.slnx -c Release --no-build --verbosity normal
 
       - name: Extract Tag Version
         if: startsWith(github.ref, 'refs/tags/v')
