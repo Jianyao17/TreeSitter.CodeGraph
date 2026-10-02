@@ -8,12 +8,15 @@
 
     <!-- NuGet Package Metadata -->
     <PackageId>TreeSitter.CodeGraph</PackageId>
+    <Title>TreeSitter.CodeGraph</Title>
     <Version>1.0.0</Version>
     <Authors>Jianyao</Authors>
+    <PackageDescription>Tree-Sitter based static code graph analyzer and multi-language codebase scanner for .NET.</PackageDescription>
     <Description>Tree-Sitter based static code graph analyzer and multi-language codebase scanner for .NET.</Description>
     <PackageTags>tree-sitter;code-analysis;code-graph;ast;static-analysis</PackageTags>
     <RepositoryUrl>https://github.com/Jianyao17/TreeSitter.CodeGraph</RepositoryUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
