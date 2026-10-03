@@ -1,7 +1,7 @@
 # TreeSitter.CodeGraph
 
-[![Build & Test](https://github.com/Jianyao17/TreeSitter.CodeGraph/actions/workflows/publish.yml/badge.svg)](https://github.com/Jianyao17/TreeSitter.CodeGraph/actions)
-[![NuGet Version](https://img.shields.io/nuget/v/TreeSitter.CodeGraph.svg)](https://www.nuget.org/packages/TreeSitter.CodeGraph/)
+[![Build & Test](https://github.com/Jianyao17/TreeSitter.CodeGraph/actions/workflows/ci.yml/badge.svg)](https://github.com/Jianyao17/TreeSitter.CodeGraph/actions)
+[![NuGet Version](https://img.shields.io/nuget/v/TreeSitter.CodeGraph.svg?logo=nuget)](https://www.nuget.org/packages/TreeSitter.CodeGraph/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 A high-performance, multi-language static code analysis engine for .NET powered by Tree-Sitter. Generates structured code dependency graphs (`CodeGraph`) via two-phase relation analysis (*Declaration Mapping* & *Usage Scanning*).

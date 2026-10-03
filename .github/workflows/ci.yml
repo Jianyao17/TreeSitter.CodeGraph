@@ -1,0 +1,43 @@
+name: CI (Build & Test)
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'test/**'
+      - 'TreeSitter.CodeGraph.sln*'
+      - 'global.json'
+      - '.github/workflows/ci.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'test/**'
+      - 'TreeSitter.CodeGraph.sln*'
+      - 'global.json'
+      - '.github/workflows/ci.yml'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET SDKs
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore TreeSitter.CodeGraph.slnx
+
+      - name: Build Solution (Release)
+        run: dotnet build TreeSitter.CodeGraph.slnx -c Release --no-restore
+
+      - name: Run Unit Tests
+        run: dotnet test TreeSitter.CodeGraph.slnx -c Release --no-build --verbosity normal

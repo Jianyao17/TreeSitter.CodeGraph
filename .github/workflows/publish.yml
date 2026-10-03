@@ -1,18 +1,16 @@
-name: Build, Test & Publish to NuGet.org
+name: Publish to NuGet.org
 
 on:
   push:
-    branches: [ main ]
     tags:
       - 'v*'
-  pull_request:
-    branches: [ main ]
+  workflow_dispatch:
 
 jobs:
-  build-test-publish:
+  publish:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
+      id-token: write   # Required for OIDC Trusted Publishing
       contents: read
 
     steps:
@@ -37,15 +35,14 @@ jobs:
         run: dotnet test TreeSitter.CodeGraph.slnx -c Release --no-build --verbosity normal
 
       - name: Extract Tag Version
-        if: startsWith(github.ref, 'refs/tags/v')
         id: get_version
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          TAG="${GITHUB_REF_NAME}"
+          VERSION="${TAG#v}"
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "Packing package version: $VERSION"
 
       - name: Pack NuGet Package
-        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           dotnet pack src/TreeSitter.CodeGraph.csproj \
             -c Release \
@@ -54,14 +51,12 @@ jobs:
             -o ./nupkg
 
       - name: Login to NuGet via Trusted Publishing (OIDC)
-        if: startsWith(github.ref, 'refs/tags/v')
         uses: NuGet/login@v1
         id: nuget_login
         with:
           user: Jianyao17
 
       - name: Publish Package to NuGet.org
-        if: startsWith(github.ref, 'refs/tags/v')
         run: |
           dotnet nuget push ./nupkg/*.nupkg \
             --api-key "${{ steps.nuget_login.outputs.NUGET_API_KEY }}" \
