@@ -13,6 +13,7 @@ A high-performance, multi-language static code analysis engine for .NET powered 
 - **Automatic Language Detection:** Built-in multi-file language detection engine (`ILanguageDetector`)
 - **Streaming Progress:** Real-time progress updates via `IAsyncEnumerable<TreeSitterProgress<CodeGraph>>`
 - **Multi-target Framework:** Compatible with .NET 8.0 (LTS), .NET 9.0, and .NET 10.0
+- **Native AOT & Trimming Ready:** Fully compatible with Native AOT (`<IsAotCompatible>true</IsAotCompatible>`), zero reflection, and zero runtime dynamic code generation
 
 ## Installation
 ```bash
@@ -51,6 +52,19 @@ await foreach (var progress in analyzer.AnalyzeAsync(snapshot, language))
     }
 }
 ```
+
+## Native AOT Support
+
+`TreeSitter.CodeGraph` is fully compatible with .NET Native AOT and trimmer-safe.
+
+When publishing consuming applications with Native AOT (`PublishAot=true`), note the following:
+1. **Native Shared Libraries:** Tree-sitter uses native shared libraries (`tree-sitter.dll`, `tree-sitter-<lang>.dll` on Windows; `.so` on Linux; `.dylib` on macOS). `dotnet publish -r <rid>` will automatically copy the target platform's native libraries to the publish directory alongside the executable.
+2. **Upstream Warnings (`IL2104` / `IL3053`):** Because the upstream dependency `TreeSitter.DotNet` targets `netstandard2.0`, the trimmer may emit analysis warnings for the `TreeSitter` assembly. All AST parsing and query bindings work correctly at runtime under Native AOT. You can safely suppress these warnings in your application project if desired:
+   ```xml
+   <PropertyGroup>
+     <NoWarn>$(NoWarn);IL2104;IL3053</NoWarn>
+   </PropertyGroup>
+   ```
 
 ## Contributing
 To add a new programming language, see our AI agent skill guide at [.agents/skills/add-language/SKILL.md](.agents/skills/add-language/SKILL.md).

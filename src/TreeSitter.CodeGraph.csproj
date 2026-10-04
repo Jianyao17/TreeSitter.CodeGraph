@@ -5,6 +5,7 @@
     <RootNamespace>TreeSitter.CodeGraph</RootNamespace>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <IsAotCompatible>true</IsAotCompatible>
 
     <!-- NuGet Package Metadata -->
     <PackageId>TreeSitter.CodeGraph</PackageId>
