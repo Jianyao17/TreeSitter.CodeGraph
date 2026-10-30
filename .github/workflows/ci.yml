@@ -7,7 +7,6 @@ on:
       - 'src/**'
       - 'test/**'
       - 'TreeSitter.CodeGraph.sln*'
-      - 'global.json'
       - '.github/workflows/ci.yml'
   pull_request:
     branches: [ main ]
@@ -15,7 +14,6 @@ on:
       - 'src/**'
       - 'test/**'
       - 'TreeSitter.CodeGraph.sln*'
-      - 'global.json'
       - '.github/workflows/ci.yml'
 
 jobs:
